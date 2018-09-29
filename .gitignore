@@ -1,5 +1,7 @@
 # pycharm
 /.idea
+/data/cifar10
+/data/mnist
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
