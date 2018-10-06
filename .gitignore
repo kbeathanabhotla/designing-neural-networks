@@ -1,7 +1,7 @@
 # pycharm
 /.idea
-/data/cifar10
-/data/mnist
+/data
+/tensorboard
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

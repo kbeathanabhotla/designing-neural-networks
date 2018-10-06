@@ -64,8 +64,8 @@ def data_loader(path_train, path_test):
     return x_train, y_train, x_test, y_test
 
 
-path_train = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist/train'
-path_test = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist/test'
+path_train = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist2/train'
+path_test = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist2/test'
 
 X_train, y_train, X_test, y_test = data_loader(path_train, path_test)
 print(X_train.shape)
@@ -128,7 +128,13 @@ def baseline_model():
 model = baseline_model()
 # Fit the model
 # The model is fit over 10 epochs with updates every 200 images. The test data is used as the validation dataset
-model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=8, batch_size=200, verbose=2)
+
+from time import time
+from keras.callbacks import TensorBoard
+
+tensorboard = TensorBoard(log_dir="/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/tensorboard/{}".format(time()))
+
+model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=8, batch_size=200, verbose=2, callbacks=[tensorboard])
 # Final evaluation of the model
 scores = model.evaluate(X_test, y_test, verbose=0)
 print("Baseline Error: %.2f%%" % (100 - scores[1] * 100))
