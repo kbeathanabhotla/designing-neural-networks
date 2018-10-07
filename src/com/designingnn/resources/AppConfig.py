@@ -11,7 +11,7 @@ config.read('config.ini')
 DEFAULT_EPSILON = config['policy']['default_epsilon']
 
 print("""
-Starting execution with the following agent properties:
+Starting execution with the following rl properties:
 
     Epsilon: {}
 
