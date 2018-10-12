@@ -1,71 +1,164 @@
 from keras import regularizers
 from keras.layers import Dense, Conv2D, Dropout, Flatten, MaxPooling2D
+from keras.layers.pooling import AveragePooling2D
 from keras.models import Sequential
+from keras.optimizers import Adam, SGD
+
+from com.designingnn.resources import mnist_state_space_parameters, mnist_hyper_parameters
+from com.designingnn.rl.Cnn import parse
+from com.designingnn.rl.StateStringUtils import StateStringUtils
+
 
 class ModelGenerator:
-    def __init__(self):
-        pass
+    def __init__(self, hyper_parameters, state_space_parameters):
+        self.hyper_parameters = hyper_parameters
+        self.state_space_parameters = state_space_parameters
 
-    def generate_model(self, model_descr, input_shape, num_classes, learning_rate):
-        pass
+    def generate_model(self, model_descr, input_shape, learning_rate):
+        net_list = parse('net', model_descr)
+        layers = StateStringUtils(self.state_space_parameters).convert_model_string_to_states(net_list)
 
-        # ('NUM', re.compile('[0-9]+')),
-        # ('CONV', re.compile('C')),  --
-        # ('POOL', re.compile('P')),
-        # ('SPLIT', re.compile('S')),
-        # ('FC', re.compile('FC')),
-        # ('DROP', re.compile('D')),
-        # ('GLOBALAVE', re.compile('GAP')),
-        # ('NIN', re.compile('NIN')),
-        # ('BATCHNORM', re.compile('BN')),
-        # ('SOFTMAX', re.compile('SM')),
+        bottom = input_shape
 
+        input_layer_added = False
 
+        is_flattened = False
 
+        model = Sequential()
 
-        # model = Sequential()
-        #
-        # # We will add 2 Convolution layers with 32 filters of 3x3, keeping the padding as same
-        # model.add(Conv2D(32, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape, activation='relu',
-        #                  kernel_initializer='glorot_uniform', kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(
-        #     Conv2D(32, (3, 3), strides=(1, 1), padding='same', activation='relu', kernel_initializer='glorot_uniform',
-        #            kernel_regularizer=regularizers.l2(0.01)))
-        # # Pooling the feature map using a 2x2 pool filter
-        # model.add(MaxPooling2D((2, 2), strides=(2, 2), padding='valid'))
-        # # Adding 2 more Convolutional layers having 64 filters of 3x3
-        # model.add(
-        #     Conv2D(64, (3, 3), strides=(1, 1), padding='same', activation='relu', kernel_initializer='glorot_uniform',
-        #            kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(
-        #     Conv2D(64, (3, 3), strides=(1, 1), padding='same', activation='relu', kernel_initializer='glorot_uniform',
-        #            kernel_regularizer=regularizers.l2(0.01)))
-        # # Flatten the feature map
-        # model.add(Flatten())
-        # # Adding FC Layers
-        # model.add(Dense(500, activation='relu'))
-        # model.add(Dropout(0.3))
-        # model.add(Dense(100, activation='relu'))
-        # model.add(Dropout(0.3))
-        # # A softmax activation function is used on the output
-        # # to turn the outputs into probability-like values and
-        # # allow one class of the 10 to be selected as the model's output #prediction.
-        # model.add(Dense(num_classes, kernel_initializer='normal', activation='softmax'))
-        # # Checking the model summary
-        # model.summary()
-        # # Compile model
-        # model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        # return model
+        for layer in layers:
+            print("""{}, {}, {}, {}, {}, {}, {}, {}""".format(
+                layer.layer_type,
+                layer.layer_depth,
+                layer.filter_depth,
+                layer.filter_size,
+                layer.stride,
+                layer.image_size,
+                layer.fc_size,
+                layer.terminate))
+
+            if layer.terminate == 1:
+                print self.hyper_parameters.NUM_CLASSES
+
+                if not is_flattened:
+                    model.add(Flatten())
+
+                model.add(Dense(self.hyper_parameters.NUM_CLASSES, kernel_initializer='normal', activation='softmax'))
+
+            elif layer.layer_type == 'conv':
+                out_depth = layer.filter_depth
+                kernel_size = layer.filter_size
+                stride = layer.stride
+
+                if not input_layer_added:
+                    model.add(Conv2D(out_depth, (kernel_size, kernel_size), strides=(stride, stride),
+                                     padding=self.state_space_parameters.conv_padding,
+                                     input_shape=bottom, activation='relu', kernel_initializer='glorot_uniform',
+                                     kernel_regularizer=regularizers.l2(learning_rate)))
+                    input_layer_added = True
+                else:
+                    model.add(Conv2D(out_depth, (kernel_size, kernel_size), strides=(stride, stride),
+                                     padding=self.state_space_parameters.conv_padding,
+                                     activation='relu', kernel_initializer='glorot_uniform',
+                                     kernel_regularizer=regularizers.l2(learning_rate)))
+                is_flattened = False
+
+                # if self.state_space_parameters.batch_norm:
+                #     model.add(BatchNormalization())
+
+            elif layer.layer_type == 'nin':
+                out_depth = layer.filter_depth
+
+                if not input_layer_added:
+                    model.add(Conv2D(out_depth, (1, 1), input_shape=bottom, activation='relu',
+                                     kernel_initializer='glorot_uniform',
+                                     kernel_regularizer=regularizers.l2(learning_rate)))
+                    input_layer_added = True
+                else:
+                    model.add(Conv2D(out_depth, (1, 1), activation='relu',
+                                     kernel_initializer='glorot_uniform',
+                                     kernel_regularizer=regularizers.l2(learning_rate)))
+
+                is_flattened = False
+                # model.add(Conv2D(out_depth, (1, 1), activation='relu',
+                #                 kernel_initializer='glorot_uniform',
+                #                 kernel_regularizer=regularizers.l2(learning_rate)))
+
+            elif layer.layer_type == 'gap':
+                # out_depth = self.hyper_parameters.NUM_CLASSES
+                #
+                # if not input_layer_added:
+                #     model.add(Conv2D(out_depth, (1, 1), input_shape=bottom, activation='relu',
+                #                 kernel_initializer='glorot_uniform',
+                #                 kernel_regularizer=regularizers.l2(learning_rate)))
+                #     input_layer_added = True
+                # else:
+                #     model.add(Conv2D(out_depth, (1, 1), activation='relu',
+                #                 kernel_initializer='glorot_uniform',
+                #                 kernel_regularizer=regularizers.l2(learning_rate)))
+
+                model.add(AveragePooling2D(strides=(1, 1)))
+                is_flattened = False
+
+            elif layer.layer_type == 'fc':
+                num_output = layer.fc_size
+
+                if not is_flattened:
+                    model.add(Flatten())
+
+                if not input_layer_added:
+                    model.add(Dense(num_output, input_dim=bottom, activation='relu'))
+                    input_layer_added = True
+                else:
+                    model.add(Dense(num_output, activation='relu'))
+
+            elif layer.layer_type == 'dropout':
+                dropout_ratio = 0.5 * float(layer.filter_depth) / layer.fc_size
+                model.add(Dropout(dropout_ratio))
+
+            elif layer.layer_type == 'pool':
+                kernel_size = layer.filter_size
+                stride = layer.stride
+
+                # if self.state_space_parameters.batch_norm:
+                #     model.add(BatchNormalization())
+
+                model.add(MaxPooling2D((kernel_size, kernel_size), strides=(stride, stride), padding='valid'))
+
+                is_flattened = False
+
+        model.summary()
+
+        optimizer = 'adam'
+
+        if self.hyper_parameters.OPTIMIZER == 'Adam':
+            optimizer = Adam(lr=learning_rate, beta_1=self.hyper_parameters.MOMENTUM, epsilon=None,
+                             decay=self.hyper_parameters.WEIGHT_DECAY_RATE)
+        elif self.hyper_parameters.OPTIMIZER == 'SGD':
+            optimizer = SGD(lr=learning_rate, momentum=self.hyper_parameters.MOMENTUM,
+                            decay=self.hyper_parameters.WEIGHT_DECAY_RATE)
+
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+
+        return model
 
 
 if __name__ == '__main__':
-    str = '[C(256,5,1), C(256,3,1), D(1,4), C(64,5,1), C(256,1,1), D(2,4), C(512,3,1), C(128,3,1), D(3,4), C(128,1,1), C(512,3,1), D(4,4), C(256,3,1), GAP(10), SM(10)]'
+    str1 = '[C(256,5,1), C(256,3,1), D(1,4), C(64,5,1), C(256,1,1), D(2,4), C(512,3,1), C(128,3,1), D(3,4), C(128,1,1), C(512,3,1), D(4,4), C(256,3,1), GAP(10), SM(10)]'
     str2 = '[C(256,1,1), C(64,3,1), D(1,2), C(512,5,1), C(128,1,1), D(2,2), C(256,5,1), GAP(10), SM(10)]'
+    str3 = '[C(128,3,1), C(64,1,1), D(1,2), C(64,5,1), C(64,3,1), D(2,2), GAP(10), SM(10)]'
 
-    mg = ModelGenerator()
-    model1 = mg.generate_model(str2, (28, 28, 3), 10, 0.01)
+    mg = ModelGenerator(mnist_hyper_parameters, mnist_state_space_parameters)
+    mg.generate_model(str1, (28, 28, 3), 0.01)
+    mg.generate_model(str2, (28, 28, 3), 0.01)
+    mg.generate_model(str3, (28, 28, 3), 0.01)
+    print("""
+    
+    
+    
+    
+    """)
+    # mg.generate_model(str, (28, 28, 3), 10, 0.01)
 
-    model1.summary()
 
-    model1.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     # return model

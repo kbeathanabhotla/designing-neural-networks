@@ -42,15 +42,15 @@ class ModelRunner:
             # Splitting the training data into training and validation
             X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-            model = ModelGenerator().generate_model(model_descr, input_shape, num_classes, learning_rate)
+            model = ModelGenerator(self.hyper_parameters, self.state_space_parameters).generate_model(model_descr, input_shape, learning_rate)
 
-            tensorboard_log_file = AppContext.DATASET + iteration
+            tensorboard_log_file = AppContext.DATASET + '_iter_' + str(iteration)
             tensorboard_folder = os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'tensorboard'),
                                               '{}'.format(tensorboard_log_file))
             tensorboard = TensorBoard(log_dir=tensorboard_folder)
 
             history = model.fit(X_train, y_train, validation_data=(X_val, y_val),
-                                epochs=self.hyper_parameters.NUM_ITER_TO_TRY_LR,
+                                epochs=self.hyper_parameters.MAX_EPOCHS,
                                 batch_size=self.hyper_parameters.TRAIN_BATCH_SIZE, verbose=2,
                                 callbacks=[tensorboard])
 

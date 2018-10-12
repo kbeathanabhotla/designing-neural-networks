@@ -136,19 +136,3 @@ class Cnn(runtime.Parser):
 def parse(rule, text):
     P = Cnn(CnnScanner(text))
     return runtime.wrap_error_reporter(P, rule)
-
-
-if __name__ == '__main__':
-    for x in Cnn(CnnScanner('[C(256,1,1), C(64,3,1), D(1,2), C(512,5,1), C(128,1,1), D(2,2), C(256,5,1), GAP(10), SM(10)]')):
-        print x
-
-    # from sys import argv, stdin
-    #
-    # if len(argv) >= 2:
-    #     if len(argv) >= 3:
-    #         f = open(argv[2], 'r')
-    #     else:
-    #         f = stdin
-    #     print(parse(argv[1], f.read()))
-    # else:
-    #     print ('Args:  <rule> [<filename>]')
