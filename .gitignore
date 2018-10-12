@@ -1,6 +1,7 @@
 # pycharm
 /.idea
-/data
+/data/**/train
+/data/**/test
 /tensorboard
 
 # Byte-compiled / optimized / DLL files
