@@ -11,6 +11,10 @@ import argparse
 
 import tensorflow as tf
 import cv2
+import scipy.io
+import numpy as np
+from PIL import Image
+
 
 def download_file(url, save_path):
     with open(save_path, 'wb') as f:
@@ -43,30 +47,33 @@ def download_svhn_dataset(save_dir):
     # print 'Downloading Svhn Test...'
     # download_file('http://ufldl.stanford.edu/housenumbers/test_32x32.mat', test_path)
 
-    train = io.loadmat(train_path)
-    x_train = train['X']
-    y_train = train['y']
-    del train
+    # np.set_printoptions(threshold=np.nan)
 
-    test = io.loadmat(test_path)
-    x_test = test['X']
-    y_test = test['y']
-    del test
+    train_mat = scipy.io.loadmat(train_path)
+    x_train = np.array(train_mat["X"]).transpose()
+    y_train = np.array(train_mat["y"])
 
-    x_train = np.transpose(x_train, (3, 2, 0, 1))
-    y_train = y_train.reshape(y_train.shape[:1]) - 1
-
-    x_test = np.transpose(x_test, (3, 2, 0, 1))
-    y_test = y_test.reshape(y_test.shape[:1]) - 1
+    test_mat = scipy.io.loadmat(test_path)
+    x_test = np.array(test_mat["X"]).transpose()
+    y_test = np.array(test_mat["y"])
 
     print("""
-        x_train shape   :   {}
-        y_train shape   :   {}
-        x_test shape    :   {}
-        x_test shape    :   {}
-        """.format(x_train.shape, y_train.shape, x_test.shape, y_test.shape))
+            SVHN dataset summary
 
-    return x_train, y_train, x_test, y_test
+            x_train shape   :   {}
+            y_train shape   :   {}
+            x_test shape    :   {}
+            x_test shape    :   {}
+            """.format(x_train.shape, y_train.shape, x_test.shape, y_test.shape))
+
+    file_num = 0
+
+    # for i in range(train_y[0:]:
+    #     img = Image.fromarray(train_x[:, :, :, i], 'RGB')
+    #     img.save("svhn" + str(i) + ".jpg")
+    #     print "saving: " + str(i)
+    #
+    #     break
 
 
 def create_mnist_dataset(save_dir):
@@ -121,7 +128,7 @@ def download_cifar10_dataset(save_dir):
     file_num = 0
 
     for x, y in zip(x_train, y_train):
-        current_file_path = os.path.join(os.path.join(save_dir, 'train'), str(y))
+        current_file_path = os.path.join(os.path.join(save_dir, 'train'), str(y[0]))
 
         if not os.path.exists(current_file_path):
             os.makedirs(current_file_path)
@@ -132,7 +139,7 @@ def download_cifar10_dataset(save_dir):
     print('Saved training dataset. Started saving test dataset.')
 
     for x, y in zip(x_test, y_test):
-        current_file_path = os.path.join(os.path.join(save_dir, 'test'), str(y))
+        current_file_path = os.path.join(os.path.join(save_dir, 'test'), str(y[0]))
 
         if not os.path.exists(current_file_path):
             os.makedirs(current_file_path)
@@ -141,7 +148,7 @@ def download_cifar10_dataset(save_dir):
         file_num = file_num + 1
 
     print('Saved test dataset.')
-
+#
 #
 # def save_dataset_as_images(x_train, y_train, x_test, y_test, save_dir):
 #     train_dir = os.path.join(save_dir, 'training')
@@ -197,7 +204,7 @@ if __name__ == '__main__':
 # import tensorflow as tf
 # import cv2
 #
-# (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+# (x_train, y_train), (x_test, y_test) = tf.cnn.datasets.mnist.load_data()
 #
 # print("""
 #     x_train shape   :   {}
