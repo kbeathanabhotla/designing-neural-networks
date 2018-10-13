@@ -18,11 +18,8 @@ class ModelGenerator:
         net_list = parse('net', model_descr)
         layers = StateStringUtils(self.state_space_parameters).convert_model_string_to_states(net_list)
 
-        bottom = input_shape
-
-        input_layer_added = False
-
         is_flattened = False
+        input_layer_added = False
 
         model = Sequential()
 
@@ -53,7 +50,7 @@ class ModelGenerator:
                 if not input_layer_added:
                     model.add(Conv2D(out_depth, (kernel_size, kernel_size), strides=(stride, stride),
                                      padding=self.state_space_parameters.conv_padding,
-                                     input_shape=bottom, activation='relu', kernel_initializer='glorot_uniform',
+                                     input_shape=input_shape, activation='relu', kernel_initializer='glorot_uniform',
                                      kernel_regularizer=regularizers.l2(learning_rate)))
                     input_layer_added = True
                 else:
@@ -67,7 +64,7 @@ class ModelGenerator:
                 out_depth = layer.filter_depth
 
                 if not input_layer_added:
-                    model.add(Conv2D(out_depth, (1, 1), input_shape=bottom, activation='relu',
+                    model.add(Conv2D(out_depth, (1, 1), input_shape=input_shape, activation='relu',
                                      kernel_initializer='glorot_uniform',
                                      kernel_regularizer=regularizers.l2(learning_rate)))
                     input_layer_added = True
@@ -89,7 +86,7 @@ class ModelGenerator:
                     model.add(Flatten())
 
                 if not input_layer_added:
-                    model.add(Dense(num_output, input_dim=bottom, activation='relu'))
+                    model.add(Dense(num_output, input_dim=input_shape, activation='relu'))
                     input_layer_added = True
                 else:
                     model.add(Dense(num_output, activation='relu'))
@@ -128,9 +125,10 @@ if __name__ == '__main__':
     str3 = '[C(128,3,1), C(64,1,1), D(1,2), C(64,5,1), C(64,3,1), D(2,2), GAP(10), SM(10)]'
 
     mg = ModelGenerator(mnist_hyper_parameters, mnist_state_space_parameters)
-    mg.generate_model(str1, (28, 28, 3), 0.01)
-    mg.generate_model(str2, (28, 28, 3), 0.01)
-    mg.generate_model(str3, (28, 28, 3), 0.01)
+    # mg.generate_model(str1, (28, 28, 3), 0.01)
+    # mg.generate_model(str2, (28, 28, 3), 0.01)
+    # mg.generate_model(str3, (28, 28, 3), 0.01)
+    mg.generate_model('[GAP(10), SM(10)]', (28, 28, 3), 0.01)
     print("""
     
     """)

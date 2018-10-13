@@ -1,14 +1,14 @@
-from com.designingnn.cnn.ModelGenerator import ModelGenerator
 import os
-from keras.callbacks import TensorBoard
+import time
 
-from com.designingnn.core import AppContext
-
-import numpy as np
 import cv2
-
+import numpy as np
+from keras.callbacks import TensorBoard
 from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
+
+from com.designingnn.cnn.ModelGenerator import ModelGenerator
+from com.designingnn.core import AppContext
 
 
 class ModelRunner:
@@ -46,7 +46,7 @@ class ModelRunner:
                                                                                                       input_shape,
                                                                                                       learning_rate)
 
-            tensorboard_log_file = AppContext.DATASET + '_iter_' + str(int(iteration))
+            tensorboard_log_file = AppContext.DATASET + '_iter_' + str(int(iteration)) + '_' +str(time.time())
             tensorboard_folder = os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'tensorboard'),
                                               '{}'.format(tensorboard_log_file))
             tensorboard = TensorBoard(log_dir=tensorboard_folder)
@@ -69,7 +69,7 @@ class ModelRunner:
                 test_acc_dict[epoc] = accuracy
                 epoc = epoc + 1
 
-            test_acc_dict[epoc] = scores[1]
+            # test_acc_dict[epoc] = scores[1]
 
             return {
                 'learning_rate': learning_rate,

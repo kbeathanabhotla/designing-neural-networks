@@ -5,6 +5,7 @@ import pandas as pd
 
 import StateEnumerator as se
 from StateStringUtils import StateStringUtils
+from com.designingnn.rl import Cnn
 from com.designingnn.rl.Cnn import parse
 from com.designingnn.rl.QValues import QValues
 
@@ -62,6 +63,11 @@ class QLearner:
         state_list = self._run_agent()
         state_list = self.stringutils.add_drop_out_states(state_list)
         net_string = self.stringutils.state_list_to_string(state_list)
+
+        parsed_net = Cnn.parse('net', net_string)
+        if len(parsed_net) == 1 or parsed_net[0][0] == 'gap' or parsed_net[0][0] == 'pool':
+            print("generated new net, invalid config of net")
+            return self.generate_net()
 
         # Check if we have already trained this model
         if net_string in self.replay_dictionary['net'].values:

@@ -11,6 +11,9 @@ from com.designingnn.core import AppContext
 from com.designingnn.resources import mnist_state_space_parameters, mnist_hyper_parameters
 from com.designingnn.rl.QLearner import QLearner
 from com.designingnn.rl.QValues import QValues
+import numpy
+
+numpy.random.seed(5)
 
 
 class DesignNeuralNetwork:
