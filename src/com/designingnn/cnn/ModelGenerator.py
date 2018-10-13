@@ -63,9 +63,6 @@ class ModelGenerator:
                                      kernel_regularizer=regularizers.l2(learning_rate)))
                 is_flattened = False
 
-                # if self.state_space_parameters.batch_norm:
-                #     model.add(BatchNormalization())
-
             elif layer.layer_type == 'nin':
                 out_depth = layer.filter_depth
 
@@ -80,23 +77,8 @@ class ModelGenerator:
                                      kernel_regularizer=regularizers.l2(learning_rate)))
 
                 is_flattened = False
-                # model.add(Conv2D(out_depth, (1, 1), activation='relu',
-                #                 kernel_initializer='glorot_uniform',
-                #                 kernel_regularizer=regularizers.l2(learning_rate)))
 
             elif layer.layer_type == 'gap':
-                # out_depth = self.hyper_parameters.NUM_CLASSES
-                #
-                # if not input_layer_added:
-                #     model.add(Conv2D(out_depth, (1, 1), input_shape=bottom, activation='relu',
-                #                 kernel_initializer='glorot_uniform',
-                #                 kernel_regularizer=regularizers.l2(learning_rate)))
-                #     input_layer_added = True
-                # else:
-                #     model.add(Conv2D(out_depth, (1, 1), activation='relu',
-                #                 kernel_initializer='glorot_uniform',
-                #                 kernel_regularizer=regularizers.l2(learning_rate)))
-
                 model.add(AveragePooling2D(strides=(1, 1)))
                 is_flattened = False
 
@@ -119,9 +101,6 @@ class ModelGenerator:
             elif layer.layer_type == 'pool':
                 kernel_size = layer.filter_size
                 stride = layer.stride
-
-                # if self.state_space_parameters.batch_norm:
-                #     model.add(BatchNormalization())
 
                 model.add(MaxPooling2D((kernel_size, kernel_size), strides=(stride, stride), padding='valid'))
 
@@ -154,11 +133,4 @@ if __name__ == '__main__':
     mg.generate_model(str3, (28, 28, 3), 0.01)
     print("""
     
-    
-    
-    
     """)
-    # mg.generate_model(str, (28, 28, 3), 10, 0.01)
-
-
-    # return model

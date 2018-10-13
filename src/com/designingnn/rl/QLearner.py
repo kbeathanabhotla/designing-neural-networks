@@ -5,6 +5,7 @@ import pandas as pd
 
 import StateEnumerator as se
 from StateStringUtils import StateStringUtils
+from com.designingnn.rl.Cnn import parse
 from com.designingnn.rl.QValues import QValues
 
 
@@ -145,7 +146,7 @@ class QLearner:
                 self.replay_dictionary[self.replay_dictionary['net'] == net]['accuracy_best_val'].values[0]
             accuracy_last_val = \
                 self.replay_dictionary[self.replay_dictionary['net'] == net]['accuracy_last_val'].values[0]
-            state_list = self.stringutils.convert_model_string_to_states(cnn.parse('net', net))
+            state_list = self.stringutils.convert_model_string_to_states(parse('net', net))
 
             state_list = self.stringutils.remove_drop_out_states(state_list)
 

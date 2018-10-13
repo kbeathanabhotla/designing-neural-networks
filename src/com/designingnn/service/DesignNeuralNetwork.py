@@ -1,7 +1,9 @@
 import os
+import re
 import time
 import traceback
 
+import numpy as np
 import pandas as pd
 
 from com.designingnn.cnn.ModelRunner import ModelRunner
@@ -9,20 +11,6 @@ from com.designingnn.core import AppContext
 from com.designingnn.resources import mnist_state_space_parameters, mnist_hyper_parameters
 from com.designingnn.rl.QLearner import QLearner
 from com.designingnn.rl.QValues import QValues
-import re
-import numpy as np
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    YELLOW = '\033[93m'
-    OKBLUE = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 
 
 class DesignNeuralNetwork:
@@ -60,9 +48,7 @@ class DesignNeuralNetwork:
         self.check_reached_limit()
 
     def start_app(self):
-        completed_experiment = self.check_reached_limit()
-
-        if not completed_experiment:
+        while not self.check_reached_limit():
             net_to_run, iteration = self.generate_new_netork()
 
             print 'Ready to train ' + net_to_run
@@ -81,9 +67,9 @@ class DesignNeuralNetwork:
 
             # Clear out model files
             self.clear_logs(checkpoint_dir,
-                                       pd.DataFrame({'net': [net_to_run],
-                                                     'iter_best_val': [iter_best],
-                                                     'iter_last_val': [iter_last]}))
+                            pd.DataFrame({'net': [net_to_run],
+                                          'iter_best_val': [iter_best],
+                                          'iter_last_val': [iter_last]}))
 
             self.incorporate_trained_net(net_to_run,
                                          acc_best,
@@ -93,8 +79,7 @@ class DesignNeuralNetwork:
                                          self.epsilon,
                                          [self.q_training_step],
                                          'localhost')
-        else:
-            print 'EXPERIMENT COMPLETE!'
+        print 'EXPERIMENT COMPLETE!'
 
     def clear_logs(self, ckpt_dir, replay):
         ''' Deletes uneeded log files and model saves:
@@ -287,9 +272,6 @@ class DesignNeuralNetwork:
                 self.qlearner.sample_replay_for_update()
 
             self.qlearner.save_q(self.list_path)
-
-            print bcolors.YELLOW + 'Incorporated net from %s, acc: %f, net: %s' % (
-                machine_run_on, acc_best_val, net_string) + bcolors.ENDC
 
         except Exception:
             print traceback.print_exc()

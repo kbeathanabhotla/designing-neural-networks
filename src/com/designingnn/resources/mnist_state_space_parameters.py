@@ -1,7 +1,7 @@
 output_states = 10
 image_size = 28
 
-layer_limit = 12
+layer_limit = 6
 
 # Transition Options
 possible_conv_depths = [64, 128, 256, 512]
