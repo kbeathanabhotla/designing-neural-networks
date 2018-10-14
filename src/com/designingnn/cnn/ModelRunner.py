@@ -62,6 +62,10 @@ class ModelRunner:
             # Final evaluation of the model
             scores = model.evaluate(X_test, y_test, verbose=0)
 
+            print("""
+            test data scores {}
+            """.format(str(scores)))
+
             test_acc_dict = {}
 
             epoc = 1
@@ -74,7 +78,8 @@ class ModelRunner:
             return {
                 'learning_rate': learning_rate,
                 'status': 'SUCCESS',
-                'test_accs': test_acc_dict
+                'test_accs': test_acc_dict,
+                'test_data_accuracy': scores[1]
             }
 
     def data_loader(self, path_train, path_test):

@@ -8,7 +8,8 @@ import pandas as pd
 
 from com.designingnn.cnn.ModelRunner import ModelRunner
 from com.designingnn.core import AppContext
-from com.designingnn.resources import mnist_state_space_parameters, mnist_hyper_parameters
+from com.designingnn.resources import mnist_state_space_parameters, mnist_hyper_parameters, cifar10_hyper_parameters, \
+    cifar10_state_space_parameters
 from com.designingnn.rl.QLearner import QLearner
 from com.designingnn.rl.QValues import QValues
 import numpy
@@ -33,8 +34,9 @@ class DesignNeuralNetwork:
         if AppContext.DATASET == 'mnist':
             self.state_space_parameters = mnist_state_space_parameters
             self.hyper_parameters = mnist_hyper_parameters
-        elif AppContext.DATASET == '':
-            pass
+        elif AppContext.DATASET == 'cifar10':
+            self.state_space_parameters = cifar10_state_space_parameters
+            self.hyper_parameters = cifar10_hyper_parameters
 
         self.list_path = os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'data'), AppContext.DATASET)
         self.replay_dictionary_path = os.path.join(self.list_path, 'replay_database.csv')
@@ -51,7 +53,10 @@ class DesignNeuralNetwork:
         self.check_reached_limit()
 
     def start_app(self):
-        while not self.check_reached_limit():
+        attained_accuracy = 0
+
+        while self.should_start_iteration(attained_accuracy):
+
             net_to_run, iteration = self.generate_new_netork()
 
             print 'Ready to train ' + net_to_run
@@ -68,6 +73,8 @@ class DesignNeuralNetwork:
             (iter_best, acc_best) = max(train_out['test_accs'].items(), key=lambda x: x[1])
             (iter_last, acc_last) = max(train_out['test_accs'].items(), key=lambda x: x[0])
 
+            attained_accuracy = float(train_out['test_data_accuracy'])
+
             # Clear out model files
             self.clear_logs(checkpoint_dir,
                             pd.DataFrame({'net': [net_to_run],
@@ -82,7 +89,18 @@ class DesignNeuralNetwork:
                                          self.epsilon,
                                          [self.q_training_step],
                                          'localhost')
-        print 'EXPERIMENT COMPLETE!'
+        print('EXPERIMENT COMPLETE!')
+
+    def should_start_iteration(self, attained_accuracy):
+        v1 = self.check_reached_limit()
+        v2 = self.attained_desired_accuracy(attained_accuracy)
+        print("""
+        {} {}
+        """.format(v1, v2))
+        return not(v1 or v2)
+
+    def attained_desired_accuracy(self, attained_accuracy):
+        return self.hyper_parameters.SATISFIED_ACCURACY <= attained_accuracy
 
     def clear_logs(self, ckpt_dir, replay):
         ''' Deletes uneeded log files and model saves:
@@ -208,6 +226,8 @@ class DesignNeuralNetwork:
                 return completed_experiment
             else:
                 return False
+        else:
+            return False
 
     def generate_new_netork(self):
         try:

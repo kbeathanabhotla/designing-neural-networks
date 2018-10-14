@@ -64,8 +64,8 @@ def data_loader(path_train, path_test):
     return x_train, y_train, x_test, y_test
 
 
-path_train = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist2/train'
-path_test = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist2/test'
+path_train = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist/train'
+path_test = '/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/data/mnist/test'
 
 X_train, y_train, X_test, y_test = data_loader(path_train, path_test)
 print(X_train.shape)
@@ -90,7 +90,6 @@ X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.
 
 print "num classes " + str(num_classes)
 print "ip shape " + str(input_shape)
-print "ip shape " + type(input_shape)
 
 # define baseline model
 # The model is a simple neural network with one hidden layer with the same number of neurons as there are inputs (784)
@@ -135,13 +134,26 @@ model = baseline_model()
 from time import time
 from keras.callbacks import TensorBoard
 
-tensorboard = TensorBoard(log_dir="/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/tensorboard/{}".format(time()))
+tensorboard = TensorBoard(log_dir="/mnt/D/Learning/MTSS/Sem 4/code/designing-neural-networks/tensorboard/cnnSample{}".format(time()))
 
-x = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=3, batch_size=200, verbose=2, callbacks=[tensorboard])
+x = model.fit(
+    X_train,
+    y_train,
+    validation_data=(X_val, y_val),
+    epochs=3,
+    batch_size=200,
+    verbose=2,
+    callbacks=[tensorboard]
+    # steps_per_epoch=5000,
+    # validation_steps=5000
+)
+
 print x.history
 print type(x)
 # Final evaluation of the model
 scores = model.evaluate(X_test, y_test, verbose=0)
-print type(scores)
+print("""
+        test data scores {}
+        """.format(str(scores)))
 print scores
 print("Baseline Error: %.2f%%" % (100 - scores[1] * 100))
