@@ -1,6 +1,6 @@
-import cifar10_state_space_parameters as ssp
+import svhn_state_space_parameters as ssp
 
-MODEL_NAME = 'cifar10'
+MODEL_NAME = 'svhn'
 
 # Number of output neurons
 NUM_CLASSES = 10                                                                    # Number of output neurons
@@ -10,8 +10,8 @@ IMAGE_HEIGHT = 32                                                               
 IMAGE_WIDTH = 32                                                                    # Final Image Width  NOTE: code only supports square images right now o_O
 
 #Batch Queue parameters
-TRAIN_BATCH_SIZE = 40                                                              # Batch size for training
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 45000                                            # Number of training examples
+TRAIN_BATCH_SIZE = 128                                                              # Batch size for training
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 68257                                            # Number of training examples
 NUM_ITER_PER_EPOCH_TRAIN = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / TRAIN_BATCH_SIZE      
 EVAL_BATCH_SIZE = 100                                                               # Batch size for validation
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 5000                                              # Number of validation examples

@@ -17,33 +17,36 @@ class ModelRunner:
         self.hyper_parameters = hyper_parameters
         self.state_space_parameters = state_space_parameters
 
+        train_data_folder = os.path.join(
+            os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'data'), AppContext.DATASET), 'train')
+        test_data_folder = os.path.join(
+            os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'data'), AppContext.DATASET), 'test')
+
+        x_train, y_train, x_test, y_test = self.data_loader(train_data_folder, test_data_folder)
+
+        self.input_shape = (x_train.shape[1], x_train.shape[2], x_train.shape[3])
+        # forcing the precision of the pixel values to be 32 bit
+        X_train = x_train.astype('float32')
+        X_test = x_test.astype('float32')
+        # normalize inputs from 0-255 to 0-1
+        X_train = X_train / 255.
+        self.X_test = X_test / 255.
+        # one hot encode outputs using np_utils.to_categorical inbuilt function
+        y_train = np_utils.to_categorical(y_train)
+        self.y_test = np_utils.to_categorical(y_test)
+        num_classes = self.y_test.shape[1]
+
+        # Splitting the training data into training and validation
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+        print("read data")
+
     def run_one_model(self, model_descr, iteration):
         for learning_rate in self.hyper_parameters.INITIAL_LEARNING_RATES:
             # Reading data
-            train_data_folder = os.path.join(
-                os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'data'), AppContext.DATASET), 'train')
-            test_data_folder = os.path.join(
-                os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'data'), AppContext.DATASET), 'test')
-
-            x_train, y_train, x_test, y_test = self.data_loader(train_data_folder, test_data_folder)
-
-            input_shape = (x_train.shape[1], x_train.shape[2], x_train.shape[3])
-            # forcing the precision of the pixel values to be 32 bit
-            X_train = x_train.astype('float32')
-            X_test = x_test.astype('float32')
-            # normalize inputs from 0-255 to 0-1
-            X_train = X_train / 255.
-            X_test = X_test / 255.
-            # one hot encode outputs using np_utils.to_categorical inbuilt function
-            y_train = np_utils.to_categorical(y_train)
-            y_test = np_utils.to_categorical(y_test)
-            num_classes = y_test.shape[1]
-
-            # Splitting the training data into training and validation
-            X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
             model = ModelGenerator(self.hyper_parameters, self.state_space_parameters).generate_model(model_descr,
-                                                                                                      input_shape,
+                                                                                                      self.input_shape,
                                                                                                       learning_rate)
 
             tensorboard_log_file = AppContext.DATASET + '_iter_' + str(int(iteration)) + '_' +str(time.time())
@@ -52,7 +55,7 @@ class ModelRunner:
             tensorboard = TensorBoard(log_dir=tensorboard_folder)
 
             history = model.fit(
-                X_train, y_train, validation_data=(X_val, y_val),
+                self.X_train, self.y_train, validation_data=(self.X_val, self.y_val),
                 epochs=self.hyper_parameters.MAX_EPOCHS,
                 batch_size=self.hyper_parameters.TRAIN_BATCH_SIZE,
                 verbose=2,
@@ -60,7 +63,7 @@ class ModelRunner:
             )
 
             # Final evaluation of the model
-            scores = model.evaluate(X_test, y_test, verbose=0)
+            scores = model.evaluate(self.X_test, self.y_test, verbose=0)
 
             print("""
             test data scores {}

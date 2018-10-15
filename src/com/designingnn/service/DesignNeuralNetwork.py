@@ -55,6 +55,8 @@ class DesignNeuralNetwork:
     def start_app(self):
         attained_accuracy = 0
 
+        trainer = ModelRunner(None, self.hyper_parameters, self.state_space_parameters)
+
         while self.should_start_iteration(attained_accuracy):
 
             net_to_run, iteration = self.generate_new_netork()
@@ -64,8 +66,6 @@ class DesignNeuralNetwork:
             checkpoint_dir = os.path.join(self.list_path, 'checkpoints')
 
             model_dir = self.get_model_dir(checkpoint_dir, net_to_run)
-
-            trainer = ModelRunner(model_dir, self.hyper_parameters, self.state_space_parameters)
 
             train_out = trainer.run_one_model(net_to_run, iteration)
             print 'OUT', train_out

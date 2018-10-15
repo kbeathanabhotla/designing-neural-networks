@@ -1,7 +1,7 @@
 output_states = 10                                                                          # Number of Classes
-image_size = 32                                                                             # Size of images before they enter network (or smallest dimension of image)
+image_size = 28                                                                             # Size of images before they enter network (or smallest dimension of image)
 
-layer_limit = 6                                                                            # Max number of layers
+layer_limit = 12                                                                            # Max number of layers
 
 # Transition Options
 possible_conv_depths = [64, 128, 256, 512]                                                  # Choices for number of filters in a convolutional layer
