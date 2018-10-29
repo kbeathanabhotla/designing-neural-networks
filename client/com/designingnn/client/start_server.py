@@ -34,6 +34,8 @@ def get_status():
 def train_model():
     model_options = json.loads(request.data)
 
+    print("received model options for training {}".format(model_options))
+
     ModelTrainService().train_model(model_options)
 
     return app.response_class(
