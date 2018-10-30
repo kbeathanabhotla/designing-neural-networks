@@ -1,13 +1,14 @@
 import argparse
 import socket
-
+import os
 import requests
 from flask import Flask, json, request
 from requests.exceptions import ConnectionError
+import shutil
 
 from com.designingnn.client.core import AppContext
 from com.designingnn.client.service.ModelTrainService import ModelTrainService
-from com.designingnn.client.service.StatusUpdateService import StatusUpdateService
+from com.designingnn.client.service.StatusService import StatusService
 
 app = Flask(__name__)
 
@@ -20,7 +21,7 @@ def test_endpoint():
 @app.route('/status')
 def get_status():
     data = {
-        'status': StatusUpdateService().get_client_status()
+        'status': StatusService().get_client_status()
     }
 
     return app.response_class(
@@ -35,11 +36,28 @@ def train_model():
     model_options = json.loads(request.data)
 
     print("received model options for training {}".format(model_options))
-
     ModelTrainService().train_model(model_options)
 
     return app.response_class(
-        response=json.dumps(data),
+        response=json.dumps(model_options),
+        status=201,
+        mimetype='application/json'
+    )
+
+
+@app.route('/get-trained-model-list')
+def get_status():
+    return app.response_class(
+        response=json.dumps(StatusService().get_trained_models_list()),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@app.route('/get-model-train-status/<model_id>', methods=['GET'])
+def get_model_training_status(model_id):
+    return app.response_class(
+        response=json.dumps(StatusService().get_model_train_status(model_id)),
         status=200,
         mimetype='application/json'
     )
@@ -66,8 +84,23 @@ def register_client(server_host, server_port, client_port):
         return 502
 
 
-def reset_all_files_for_current_client():
-    pass
+def set_context_for_current_client():
+    if os.path.exists(AppContext.METADATA_DIR):
+        print("client meta directory already exists, clearing it!")
+        shutil.rmtree(AppContext.METADATA_DIR)
+
+    print("meta directory for client created!")
+    os.mkdir(AppContext.METADATA_DIR)
+
+    AppContext.STATUS_FILE = os.path.join(AppContext.METADATA_DIR, 'status.txt')
+    AppContext.MODELS_INFO_FOLDER = os.path.join(AppContext.METADATA_DIR, 'trained_models_info')
+
+    print("status file created.")
+    with open(AppContext.STATUS_FILE, 'w+') as status_f:
+        status_f.write('{}'.format('free'))
+
+    print("trained_models_info_folder created.")
+    os.mkdir(AppContext.MODELS_INFO_FOLDER)
 
 
 def set_context_options(args):
@@ -99,7 +132,7 @@ if __name__ == '__main__':
         register_client(AppContext.SERVER_HOST, AppContext.SERVER_PORT, AppContext.CLIENT_PORT)
         print("registered client to server.")
 
-        reset_all_files_for_current_client()
+        set_context_for_current_client()
 
         print("starting client on port {}".format(AppContext.CLIENT_PORT))
         app.run(host="0.0.0.0", port=AppContext.CLIENT_PORT)

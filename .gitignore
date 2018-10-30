@@ -2,6 +2,7 @@
 /.idea
 /meta_repo/**/training
 /meta_repo/**/testing
+/meta_repo/client*
 /tensorboard
 
 # Byte-compiled / optimized / DLL files
