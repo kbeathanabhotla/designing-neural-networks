@@ -28,7 +28,7 @@ class StatusService:
 
         return models
 
-    def update_model_training_info(self, model_info):
+    def update_model_train_status(self, model_info):
         model_info_file_path = os.path.join(AppContext.MODELS_INFO_FOLDER, '{}.txt'.format(model_info['model_id']))
         with open(model_info_file_path, 'w+') as model_info_file:
             model_info_file.write(json.dumps(model_info))

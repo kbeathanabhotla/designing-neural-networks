@@ -1,5 +1,6 @@
 import threading
 
+from com.designingnn.client.service import KerasEpocCallback
 from com.designingnn.client.service.ModelParser import ModelParser
 from com.designingnn.client.service.StatusService import StatusService
 
@@ -10,6 +11,8 @@ import os
 from keras.utils import np_utils
 import cv2
 
+import requests
+
 from sklearn.model_selection import train_test_split
 
 
@@ -18,12 +21,21 @@ class ModelParseAndTrainTask(threading.Thread):
         self.model_options = model_options
         self.status_update_service = StatusService()
 
-        StatusService().update_model_training_info()
-
     def run(self):
-        model = ModelParser().parse_model(self.model_options['model_def'])
 
-        self.set_client_status('training')
+        model_train_summary = {
+            'model_id': self.model_options['model_id'],
+            'model_def': self.model_options['model_def'],
+            'test_accuracy': 0,
+            'train_final_accuracy': 0,
+            'train_best_epoc_accuracy': 0,
+            'time_taken': 0,
+            'summary': 'yet to start training'
+        }
+
+        self.status_update_service.update_client_status('training')
+        self.status_update_service.update_model_train_status(model_train_summary)
+
         try:
             train_path = os.path.join(AppContext.DATASET_DIR, 'training')
             test_path = os.path.join(AppContext.DATASET_DIR, 'testing')
@@ -31,16 +43,39 @@ class ModelParseAndTrainTask(threading.Thread):
             x_train, y_train, x_test, y_test = self.read_data(train_path, test_path)
             x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
-            model = ModelParser().parse_model(model_def)
-            model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=2, batch_size=200, verbose=2)
-            # Final evaluation of the model
-            scores = model.evaluate(x_test, y_test, verbose=0)
+            model = ModelParser().parse_model(self.model_options['model_def'])
+
+            model.fit(x_train, y_train, validation_data=(x_val, y_val), callbacks=[KerasEpocCallback((x_test, y_test))])
+
+
+
+
         except:
             pass
 
-        self.set_client_status('free')
+        self.status_update_service.update_client_status('free')
+        self.report_train_status_to_server(model_train_summary)
+
+        # StatusService().update_model_training_info()
+        #
+        #
+        #
+        # try:
+        #
+        #     model = ModelParser().parse_model(model_def)
+        #     model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=2, batch_size=200, verbose=2)
+        #     # Final evaluation of the model
+        #     scores = model.evaluate(x_test, y_test, verbose=0)
+        # except:
+        #     pass
+        #
+        # self.set_client_status('free')
 
         pass
+
+    def report_train_status_to_server(self, model_train_summary):
+        requests.post(url="http://{}:{}/model-train-status".format(AppContext.SERVER_HOST, AppContext.SERVER_PORT),
+                      data=model_train_summary)
 
     def read_data(self, path_train, path_test):
         train_list = os.listdir(path_train)
