@@ -10,7 +10,7 @@ class StatusUpdateService:
         if not os.path.exists(self.status_file):
             print("status file not found creating one.")
             with open(self.status_file, 'w+') as status_f:
-                status_f.write('{}'.format('started'))
+                status_f.write('{}'.format('free'))
 
     def get_client_status(self):
         status = None
