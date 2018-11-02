@@ -1,16 +1,25 @@
 from keras.callbacks import Callback
+import requests
+
+from com.designingnn.client.core import AppContext
 
 
 class KerasEpocCallback(Callback):
-    def __init__(self, test_data):
+    def __init__(self, model_id, test_data):
         self.test_data = test_data
+        self.model_id = model_id
 
     def on_epoch_end(self, epoch, logs={}):
         x, y = self.test_data
         loss, acc = self.model.evaluate(x, y, verbose=0)
 
-        print('\nTesting loss: {}, acc: {}\n'.format(loss, acc))
+        print('\nTesting epoc: {}, loss: {}, acc: {}\n'.format(self.params['nb_epoch'], loss, acc))
 
-        self.params['nb_epoch']
+        data = {
+            'epoc': self.params['nb_epoch'],
+            'test_accuracy': acc,
+            'model_id': self.model_id,
+            'client_hostname': AppContext.IP_ADDRESS
+        }
 
-        # {'verbose': 1, 'nb_epoch': 12, 'batch_size': 128, 'metrics': ['loss', 'acc', 'val_loss', 'val_acc'], 'nb_sample': 60000, 'do_validation': True}
+        requests.post("http://{}:{}/model-train-update", data)

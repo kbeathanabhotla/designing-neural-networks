@@ -10,6 +10,7 @@ import numpy as np
 import os
 from keras.utils import np_utils
 import cv2
+import time
 
 import requests
 
@@ -30,13 +31,16 @@ class ModelParseAndTrainTask(threading.Thread):
             'train_final_accuracy': 0,
             'train_best_epoc_accuracy': 0,
             'time_taken': 0,
-            'summary': 'yet to start training'
+            'summary': 'yet to start training',
+            'status': 'yet_to_train'
         }
 
         self.status_update_service.update_client_status('training')
         self.status_update_service.update_model_train_status(model_train_summary)
 
         try:
+            start = time.time()
+
             train_path = os.path.join(AppContext.DATASET_DIR, 'training')
             test_path = os.path.join(AppContext.DATASET_DIR, 'testing')
 
@@ -45,33 +49,32 @@ class ModelParseAndTrainTask(threading.Thread):
 
             model = ModelParser().parse_model(self.model_options['model_def'])
 
-            model.fit(x_train, y_train, validation_data=(x_val, y_val), callbacks=[KerasEpocCallback((x_test, y_test))])
+            history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
+                                callbacks=[KerasEpocCallback((x_test, y_test))])
 
+            all_accuracies = history.history['acc']
 
+            model_train_summary['train_best_epoc_accuracy'] = max(all_accuracies)
+            model_train_summary['train_final_accuracy'] = all_accuracies[-1]
 
+            scores = model.evaluate(x_test, y_test, verbose=0)
+            model_train_summary['test_accuracy'] = scores[1]
 
+            end = time.time()
+            hours, rem = divmod(end - start, 3600)
+            minutes, seconds = divmod(rem, 60)
+
+            model_train_summary["time_taken"] = "{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds)
+            model_train_summary["summary"] = "training completed"
+            model_train_summary["status"] = "completed"
+
+            self.status_update_service.update_model_train_status(model_train_summary)
         except:
-            pass
+            model_train_summary['summary'] = "failed to train model. "
+            model_train_summary["status"] = "failed"
 
         self.status_update_service.update_client_status('free')
         self.report_train_status_to_server(model_train_summary)
-
-        # StatusService().update_model_training_info()
-        #
-        #
-        #
-        # try:
-        #
-        #     model = ModelParser().parse_model(model_def)
-        #     model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=2, batch_size=200, verbose=2)
-        #     # Final evaluation of the model
-        #     scores = model.evaluate(x_test, y_test, verbose=0)
-        # except:
-        #     pass
-        #
-        # self.set_client_status('free')
-
-        pass
 
     def report_train_status_to_server(self, model_train_summary):
         requests.post(url="http://{}:{}/model-train-status".format(AppContext.SERVER_HOST, AppContext.SERVER_PORT),
