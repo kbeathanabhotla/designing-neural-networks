@@ -22,4 +22,4 @@ class KerasEpocCallback(Callback):
             'client_hostname': AppContext.IP_ADDRESS
         }
 
-        requests.post("http://{}:{}/model-train-update", data)
+        requests.post("http://{}:{}/model-train-epoc-update", data)
