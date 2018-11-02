@@ -1,20 +1,17 @@
+import os
 import threading
+import time
 
+import cv2
+import numpy as np
+import requests
+from keras.utils import np_utils
+from sklearn.model_selection import train_test_split
+
+from com.designingnn.client.core import AppContext
 from com.designingnn.client.service import KerasEpocCallback
 from com.designingnn.client.service.ModelParser import ModelParser
 from com.designingnn.client.service.StatusService import StatusService
-
-from com.designingnn.client.core import AppContext
-from com.designingnn.client.service.ModelParser import ModelParser
-import numpy as np
-import os
-from keras.utils import np_utils
-import cv2
-import time
-
-import requests
-
-from sklearn.model_selection import train_test_split
 
 
 class ModelParseAndTrainTask(threading.Thread):
@@ -47,7 +44,9 @@ class ModelParseAndTrainTask(threading.Thread):
             x_train, y_train, x_test, y_test = self.read_data(train_path, test_path)
             x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
-            model = ModelParser().parse_model(self.model_options['model_def'])
+            input_dim = (x_train.shape[1], x_train.shape[2], x_train.shape[3])
+
+            model = ModelParser().generate_model(self.model_options['model_def'], input_dim)
 
             history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
                                 callbacks=[KerasEpocCallback((x_test, y_test))])

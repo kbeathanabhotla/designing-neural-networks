@@ -1,108 +1,85 @@
+from keras.layers.convolutional import Conv2D
+from keras.layers.core import Dense, Dropout
+from keras.layers.pooling import MaxPooling2D, AveragePooling2D
+from keras.models import Sequential
+from keras.utils import multi_gpu_model
+
+from com.designingnn.client.core import AppContext
+
+
 class ModelParser:
     def __init__(self):
         pass
 
-    def parse_model(self, model_def):
-        net_list = parse('net', model_def)
-        layers = StateStringUtils(self.state_space_parameters).convert_model_string_to_states(net_list)
+    def get_layer(self, layer, input_dim=None, layer_num=None):
+        layer_name = layer[0:layer.find("(")]
+        print layer_name
 
-        is_flattened = False
-        input_layer_added = False
+        if layer_name == 'SOFTMAX':
+            num_out_neurons = int(layer.replace('SOFTMAX', '').replace('(', '').replace(')', '').strip())
+
+            if layer_num != 1:
+                return Dense(num_out_neurons, kernel_initializer='normal', activation='softmax')
+            else:
+                return Dense(num_out_neurons, input_shape=input_dim, kernel_initializer='normal', activation='softmax')
+
+        elif layer_name == 'CONV':
+            params = layer.replace('CONV', '').replace('(', '').replace(')', '').strip().split(',')
+            num_filters = int(params[0])
+            filter_size = int(params[1])
+            stride = int(params[2])
+
+            if layer_num != 1:
+                return Conv2D(num_filters, (filter_size, filter_size), strides=(stride, stride), padding='same',
+                              activation='relu')
+            else:
+                return Conv2D(num_filters, (filter_size, filter_size), input_shape=input_dim, strides=(stride, stride),
+                              padding='same',
+                              activation='relu')
+
+        elif layer_name == 'MAXPOOLING':
+            pool_size = int(layer.replace('MAXPOOLING', '').replace('(', '').replace(')', '').strip())
+            return MaxPooling2D((pool_size, pool_size))
+
+        elif layer_name == 'AVGPOOLING':
+            pool_size = int(layer.replace('AVGPOOLING', '').replace('(', '').replace(')', '').strip())
+            return AveragePooling2D((pool_size, pool_size))
+
+        elif layer_name == 'DENSE':
+            params = layer.replace('DENSE', '').replace('(', '').replace(')', '').strip().split(',')
+            num_output = int(params[0])
+
+            if layer_num != 1:
+                return Dense(num_output, activation='relu')
+            else:
+                return Dense(num_output, input_shape=input_dim, activation='relu')
+
+    def generate_model(self, model_def, input_dim):
+        model_def = model_def[1:-1]
+        print model_def
 
         model = Sequential()
 
+        layers = model_def.split("),")
+        layer_num = 1
         for layer in layers:
-            print("""{}, {}, {}, {}, {}, {}, {}, {}""".format(
-                layer.layer_type,
-                layer.layer_depth,
-                layer.filter_depth,
-                layer.filter_size,
-                layer.stride,
-                layer.image_size,
-                layer.fc_size,
-                layer.terminate))
+            layer = layer.strip()
+            if layer[-1] != ')':
+                layer = layer + ")"
 
-            if layer.terminate == 1:
-                print self.hyper_parameters.NUM_CLASSES
+            model.add(self.get_layer(layer, input_dim, layer_num))
 
-                if not is_flattened:
-                    model.add(Flatten())
+            if layer[0:layer.find("(")] == 'DENSE':
+                model.add(Dropout(0.2))
 
-                model.add(Dense(self.hyper_parameters.NUM_CLASSES, kernel_initializer='normal', activation='softmax'))
-
-            elif layer.layer_type == 'conv':
-                out_depth = layer.filter_depth
-                kernel_size = layer.filter_size
-                stride = layer.stride
-
-                if not input_layer_added:
-                    model.add(Conv2D(out_depth, (kernel_size, kernel_size), strides=(stride, stride),
-                                     padding=self.state_space_parameters.conv_padding,
-                                     input_shape=input_shape, activation='relu', kernel_initializer='glorot_uniform',
-                                     kernel_regularizer=regularizers.l2(learning_rate)))
-                    input_layer_added = True
-                else:
-                    model.add(Conv2D(out_depth, (kernel_size, kernel_size), strides=(stride, stride),
-                                     padding=self.state_space_parameters.conv_padding,
-                                     activation='relu', kernel_initializer='glorot_uniform',
-                                     kernel_regularizer=regularizers.l2(learning_rate)))
-                is_flattened = False
-
-            elif layer.layer_type == 'nin':
-                out_depth = layer.filter_depth
-
-                if not input_layer_added:
-                    model.add(Conv2D(out_depth, (1, 1), input_shape=input_shape, activation='relu',
-                                     kernel_initializer='glorot_uniform',
-                                     kernel_regularizer=regularizers.l2(learning_rate)))
-                    input_layer_added = True
-                else:
-                    model.add(Conv2D(out_depth, (1, 1), activation='relu',
-                                     kernel_initializer='glorot_uniform',
-                                     kernel_regularizer=regularizers.l2(learning_rate)))
-
-                is_flattened = False
-
-            elif layer.layer_type == 'gap':
-                model.add(AveragePooling2D(strides=(1, 1)))
-                is_flattened = False
-
-            elif layer.layer_type == 'fc':
-                num_output = layer.fc_size
-
-                if not is_flattened:
-                    model.add(Flatten())
-
-                if not input_layer_added:
-                    model.add(Dense(num_output, input_dim=input_shape, activation='relu'))
-                    input_layer_added = True
-                else:
-                    model.add(Dense(num_output, activation='relu'))
-
-            elif layer.layer_type == 'dropout':
-                dropout_ratio = 0.5 * float(layer.filter_depth) / layer.fc_size
-                model.add(Dropout(dropout_ratio))
-
-            elif layer.layer_type == 'pool':
-                kernel_size = layer.filter_size
-                stride = layer.stride
-
-                model.add(MaxPooling2D((kernel_size, kernel_size), strides=(stride, stride), padding='valid'))
-
-                is_flattened = False
+            layer_num = layer_num + 1
 
         model.summary()
 
-        optimizer = 'adam'
-
-        if self.hyper_parameters.OPTIMIZER == 'Adam':
-            optimizer = Adam(lr=learning_rate, beta_1=self.hyper_parameters.MOMENTUM, epsilon=None,
-                             decay=self.hyper_parameters.WEIGHT_DECAY_RATE)
-        elif self.hyper_parameters.OPTIMIZER == 'SGD':
-            optimizer = SGD(lr=learning_rate, momentum=self.hyper_parameters.MOMENTUM,
-                            decay=self.hyper_parameters.WEIGHT_DECAY_RATE)
-
-        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-
-        return model
-
+        if AppContext.GPUS_TO_USE >= 2:
+            parallel_model = multi_gpu_model(model, gpus=AppContext.GPUS_TO_USE)
+            parallel_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+            return parallel_model
+        else:
+            model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+            return model
