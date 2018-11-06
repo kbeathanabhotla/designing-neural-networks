@@ -1,0 +1,17 @@
+import socket
+
+DATASET_DIR = None
+METADATA_DIR = None
+SERVER_PORT = None
+CLIENTS_FILE = None
+EPOC_STATUS_FILE = None
+SERVER_STATUS_FILE = None
+
+CLIENTS = []
+
+CURRENT_EPSILON = None
+
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(('8.8.8.8', 1))
+
+IP_ADDRESS = s.getsockname()[0]
