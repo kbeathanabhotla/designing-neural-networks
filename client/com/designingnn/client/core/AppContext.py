@@ -10,5 +10,8 @@ GPUS_TO_USE = 1
 STATUS_FILE = None
 MODELS_INFO_FOLDER = None
 
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(('8.8.8.8', 1))
+
 HOSTNAME = socket.gethostname()
-IP_ADDRESS = socket.gethostbyname(socket.gethostname())
+IP_ADDRESS = s.getsockname()[0]

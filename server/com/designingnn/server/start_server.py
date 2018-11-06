@@ -15,6 +15,7 @@ def test_endpoint():
 @app.route('/model-train-epoc-update', methods=['POST'])
 def update_model_training_epoc_status():
     data = json.loads(request.data)
+    print(data)
     ModelStatusService().update_model_training_status(data)
 
     return app.response_class(
@@ -27,6 +28,20 @@ def update_model_training_epoc_status():
 @app.route('/model-train-update', methods=['POST'])
 def update_model_training_epoc():
     data = json.loads(request.data)
+    print(data)
+    ModelStatusService().update_model_training_status(data)
+
+    return app.response_class(
+        response=json.dumps(data),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@app.route('/model-train-status', methods=['POST'])
+def update_model_training_status():
+    data = json.loads(request.data)
+    print(data)
     ModelStatusService().update_model_training_status(data)
 
     return app.response_class(
@@ -38,10 +53,8 @@ def update_model_training_epoc():
 
 @app.route('/register', methods=['POST'])
 def register_client():
-    print("registering client with payload {}".format(request.data))
     data = json.loads(request.data)
-
-    print data
+    print(data)
 
     data['status'] = 'registered'
     # return redirect(url_for('success', name=user))

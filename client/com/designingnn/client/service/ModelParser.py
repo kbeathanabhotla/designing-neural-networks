@@ -1,5 +1,5 @@
 from keras.layers.convolutional import Conv2D
-from keras.layers.core import Dense, Dropout
+from keras.layers.core import Dense, Dropout, Flatten
 from keras.layers.pooling import MaxPooling2D, AveragePooling2D
 from keras.models import Sequential
 from keras.utils import multi_gpu_model
@@ -58,6 +58,8 @@ class ModelParser:
         model_def = model_def[1:-1]
         print model_def
 
+        should_flatten = True
+
         model = Sequential()
 
         layers = model_def.split("),")
@@ -67,10 +69,15 @@ class ModelParser:
             if layer[-1] != ')':
                 layer = layer + ")"
 
+            if layer[0:layer.find("(")] == 'DENSE' and should_flatten:
+                model.add(Flatten())
+                should_flatten = False
+
             model.add(self.get_layer(layer, input_dim, layer_num))
 
-            if layer[0:layer.find("(")] == 'DENSE':
+            if layer[0:layer.find("(")] == 'DENSE' and layer_num <= len(layers) - 1:
                 model.add(Dropout(0.2))
+                print("added drouput " + str(layer))
 
             layer_num = layer_num + 1
 
@@ -83,3 +90,9 @@ class ModelParser:
         else:
             model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
             return model
+
+
+if __name__ == '__main__':
+    ModelParser().generate_model(
+        '[CONV(32,3,1), CONV(32,3,1), MAXPOOLING(2), CONV(64,3,1), CONV(64,3,1), DENSE(500), DENSE(100), SOFTMAX(10)]',
+        (28, 28, 3))

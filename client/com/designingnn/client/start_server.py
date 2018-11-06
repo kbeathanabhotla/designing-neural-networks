@@ -45,8 +45,8 @@ def train_model():
     )
 
 
-@app.route('/get-trained-model-list')
-def get_status():
+@app.route('/get-trained-model-list', methods=['GET'])
+def get_trained_model_list():
     return app.response_class(
         response=json.dumps(StatusService().get_trained_models_list()),
         status=200,
@@ -78,7 +78,7 @@ def register_client(server_host, server_port, client_port):
     }
 
     try:
-        r = requests.post(url="http://{}:{}/register".format(server_host, server_port), data=data)
+        r = requests.post(url="http://{}:{}/register".format(server_host, server_port), data=json.dumps(data))
         return r.status_code
     except ConnectionError:
         return 502
@@ -105,8 +105,8 @@ def set_context_for_current_client():
 
 def set_context_options(args):
     AppContext.SERVER_HOST = args.server_host
-    AppContext.SERVER_PORT = args.server_port
-    AppContext.CLIENT_PORT = int(args.server_port)
+    AppContext.SERVER_PORT = int(args.server_port)
+    AppContext.CLIENT_PORT = int(args.client_port)
     AppContext.DATASET_DIR = args.data_dir
     AppContext.METADATA_DIR = args.metadata_dir
     AppContext.GPUS_TO_USE = args.num_gpus_to_use

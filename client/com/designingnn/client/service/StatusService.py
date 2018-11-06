@@ -39,7 +39,7 @@ class StatusService:
         with open(model_info_file_path, 'r') as model_info_file:
             status = model_info_file.read()
 
-        return status
+        return json.loads(status)
 
 
 if __name__ == '__main__':

@@ -9,15 +9,30 @@ from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
 
 from com.designingnn.client.core import AppContext
-from com.designingnn.client.service import KerasEpocCallback
+from com.designingnn.client.service.KerasEpocCallback import KerasEpocCallback
 from com.designingnn.client.service.ModelParser import ModelParser
 from com.designingnn.client.service.StatusService import StatusService
+import ConfigParser
+import json
+import traceback
 
 
 class ModelParseAndTrainTask(threading.Thread):
     def __init__(self, model_options):
+        super(ModelParseAndTrainTask, self).__init__()
         self.model_options = model_options
         self.status_update_service = StatusService()
+
+        p = ConfigParser.ConfigParser()
+        p.read(os.path.join(AppContext.DATASET_DIR, 'hyperparameters.ini'))
+
+        dictionary = {}
+        for section in p.sections():
+            dictionary[section] = {}
+            for option in p.options(section):
+                dictionary[section][option] = p.get(section, option)
+
+        self.hyper_parameters = dictionary
 
     def run(self):
 
@@ -34,6 +49,7 @@ class ModelParseAndTrainTask(threading.Thread):
 
         self.status_update_service.update_client_status('training')
         self.status_update_service.update_model_train_status(model_train_summary)
+        self.report_train_status_to_server(model_train_summary)
 
         try:
             start = time.time()
@@ -46,10 +62,17 @@ class ModelParseAndTrainTask(threading.Thread):
 
             input_dim = (x_train.shape[1], x_train.shape[2], x_train.shape[3])
 
+            print(input_dim)
+
             model = ModelParser().generate_model(self.model_options['model_def'], input_dim)
 
+            reporter_callback = KerasEpocCallback(self.model_options['model_id'], (x_test, y_test))
+
             history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
-                                callbacks=[KerasEpocCallback((x_test, y_test))])
+                                epochs=int(self.hyper_parameters['TRAINING_OPTIONS']['epocs']),
+                                batch_size=int(self.hyper_parameters['TRAINING_OPTIONS']['batch_size']),
+                                callbacks=[reporter_callback],
+                                verbose=2)
 
             all_accuracies = history.history['acc']
 
@@ -67,17 +90,21 @@ class ModelParseAndTrainTask(threading.Thread):
             model_train_summary["summary"] = "training completed"
             model_train_summary["status"] = "completed"
 
-            self.status_update_service.update_model_train_status(model_train_summary)
         except:
+            stack_trace = traceback.format_exc()
+
+            print stack_trace
             model_train_summary['summary'] = "failed to train model. "
             model_train_summary["status"] = "failed"
+            model_train_summary['stack_trace'] = stack_trace
 
         self.status_update_service.update_client_status('free')
+        self.status_update_service.update_model_train_status(model_train_summary)
         self.report_train_status_to_server(model_train_summary)
 
     def report_train_status_to_server(self, model_train_summary):
         requests.post(url="http://{}:{}/model-train-status".format(AppContext.SERVER_HOST, AppContext.SERVER_PORT),
-                      data=model_train_summary)
+                      data=json.dumps(model_train_summary))
 
     def read_data(self, path_train, path_test):
         train_list = os.listdir(path_train)
