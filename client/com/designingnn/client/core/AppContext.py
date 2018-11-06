@@ -13,5 +13,4 @@ MODELS_INFO_FOLDER = None
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(('8.8.8.8', 1))
 
-HOSTNAME = socket.gethostname()
 IP_ADDRESS = s.getsockname()[0]

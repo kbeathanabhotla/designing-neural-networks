@@ -1,6 +1,9 @@
+import ConfigParser
+import json
 import os
 import threading
 import time
+import traceback
 
 import cv2
 import numpy as np
@@ -12,9 +15,6 @@ from com.designingnn.client.core import AppContext
 from com.designingnn.client.service.KerasEpocCallback import KerasEpocCallback
 from com.designingnn.client.service.ModelParser import ModelParser
 from com.designingnn.client.service.StatusService import StatusService
-import ConfigParser
-import json
-import traceback
 
 
 class ModelParseAndTrainTask(threading.Thread):

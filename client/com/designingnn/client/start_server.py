@@ -1,10 +1,10 @@
 import argparse
-import socket
 import os
+import shutil
+
 import requests
 from flask import Flask, json, request
 from requests.exceptions import ConnectionError
-import shutil
 
 from com.designingnn.client.core import AppContext
 from com.designingnn.client.service.ModelTrainService import ModelTrainService
@@ -73,7 +73,7 @@ def ping_server(host, port):
 
 def register_client(server_host, server_port, client_port):
     data = {
-        'host': socket.gethostname(),
+        'host': AppContext.IP_ADDRESS,
         'port': int(client_port)
     }
 
