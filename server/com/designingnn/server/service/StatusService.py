@@ -15,12 +15,15 @@ class StatusService:
                 model['epoch'] = update['epoch']
 
         with open(AppContext.EPOCH_STATUS_FILE, 'a+') as epoch_status_file:
-            epoch_status_file.write(json.dumps(update))
+            epoch_status_file.write(json.dumps(update) + '\n')
 
     def log_model_training_update(self, update):
+        if 'stack_trace' in update:
+            update['stack_trace'] = update['stack_trace'].encode('base64').strip()
+
         file = os.path.join(AppContext.MODELS_FOLDER, '{}.txt'.format(update['model_id']))
         with open(file, 'w+') as model_file:
-            model_file.write(json.dumps(update))
+            model_file.write(json.dumps(update) + '\n')
 
 
 
