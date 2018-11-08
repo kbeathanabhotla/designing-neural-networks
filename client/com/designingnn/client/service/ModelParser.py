@@ -21,7 +21,8 @@ class ModelParser:
             if layer_num != 1:
                 return Dense(num_out_neurons, kernel_initializer='normal', activation='softmax')
             else:
-                return Dense(num_out_neurons, input_shape=input_dim, kernel_initializer='normal', activation='softmax')
+                return Dense(num_out_neurons, input_shape=input_dim[0] * input_dim[1] * input_dim[2],
+                             kernel_initializer='normal', activation='softmax')
 
         elif layer_name == 'CONV':
             params = layer.replace('CONV', '').replace('(', '').replace(')', '').strip().split(',')
@@ -52,7 +53,9 @@ class ModelParser:
             if layer_num != 1:
                 return Dense(num_output, activation='relu')
             else:
-                return Dense(num_output, input_shape=input_dim, activation='relu')
+                flattened_value = input_dim[0]*input_dim[1]*input_dim[2]
+                print(flattened_value)
+                return Dense(num_output, input_dim=flattened_value, activation='relu')
 
     def generate_model(self, model_def, input_dim):
         model_def = model_def[1:-1]
@@ -69,13 +72,16 @@ class ModelParser:
             if layer[-1] != ')':
                 layer = layer + ")"
 
-            if layer[0:layer.find("(")] == 'DENSE' and should_flatten:
+            if (layer[0:layer.find("(")] == 'DENSE' or layer[0:layer.find(
+                    "(")] == 'SOFTMAX') and should_flatten and layer_num != 1:
                 model.add(Flatten())
+                print("added flattened")
                 should_flatten = False
 
             model.add(self.get_layer(layer, input_dim, layer_num))
 
-            if layer[0:layer.find("(")] == 'DENSE' and layer_num <= len(layers) - 1:
+            if (layer[0:layer.find("(")] == 'DENSE' or layer[0:layer.find("(")] == 'SOFTMAX') and layer_num <= len(
+                    layers) - 1:
                 model.add(Dropout(0.2))
                 print("added drouput " + str(layer))
 
@@ -90,9 +96,3 @@ class ModelParser:
         else:
             model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
             return model
-
-
-if __name__ == '__main__':
-    ModelParser().generate_model(
-        '[CONV(32,3,1), CONV(32,3,1), MAXPOOLING(2), CONV(64,3,1), CONV(64,3,1), DENSE(500), DENSE(100), SOFTMAX(10)]',
-        (28, 28, 3))

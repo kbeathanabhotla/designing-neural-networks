@@ -10,6 +10,10 @@ SERVER_STATUS_FILE = None
 CLIENTS = []
 
 CURRENT_EPSILON = None
+CURRENT_ITERATION = None
+
+MODELS_IN_TRAINING = []
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(('8.8.8.8', 1))

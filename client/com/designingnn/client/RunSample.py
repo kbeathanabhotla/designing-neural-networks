@@ -4,8 +4,9 @@ import os
 
 model_options = {
     "model_id": "1234",
-    "model_def": "[CONV(32,3,1), CONV(32,3,1), MAXPOOLING(2), CONV(64,3,1), CONV(64,3,1), DENSE(500), DENSE(100), SOFTMAX(10)]"
+    "model_def": "[DENSE(500), DENSE(100), SOFTMAX(10)]"
 }
+    # "model_def": "[CONV(32,3,1), CONV(32,3,1), MAXPOOLING(2), CONV(64,3,1), CONV(64,3,1), DENSE(500), DENSE(100), SOFTMAX(10)]"
 
 AppContext.METADATA_DIR = "/mnt/D/Learning/MTSS/Sem4/code/designing-neural-networks/meta_repo/client_1"
 AppContext.DATASET_DIR = "/mnt/D/Learning/MTSS/Sem4/code/designing-neural-networks/meta_repo/mnist"

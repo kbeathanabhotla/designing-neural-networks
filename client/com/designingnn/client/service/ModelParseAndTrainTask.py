@@ -64,6 +64,12 @@ class ModelParseAndTrainTask(threading.Thread):
 
             print(input_dim)
 
+            if self.is_first_layer_dense():
+                num_pixels = x_train.shape[1] * x_train.shape[2] * x_train.shape[3]
+
+                x_train = x_train.reshape(x_train.shape[0], num_pixels)
+                x_test = x_test.reshape(x_test.shape[0], num_pixels)
+
             model = ModelParser().generate_model(self.model_options['model_def'], input_dim)
 
             reporter_callback = KerasEpocCallback(self.model_options['model_id'], (x_test, y_test))
@@ -163,6 +169,13 @@ class ModelParseAndTrainTask(threading.Thread):
         y_test = np_utils.to_categorical(y_test)
 
         return x_train, y_train, x_test, y_test
+
+    def is_first_layer_dense(self):
+        model_def = self.model_options['model_def']
+        model_def = model_def[1:-1]
+        first_layer = model_def.split("),")[0].strip()
+
+        return first_layer[0:first_layer.find("(")] == 'DENSE' or first_layer[0:first_layer.find("(")] == 'SOFTMAX'
 
     def set_client_status(self, status):
         if status == 'training':
