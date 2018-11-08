@@ -16,7 +16,7 @@ class KerasEpocCallback(Callback):
         x, y = self.test_data
         loss, acc = self.model.evaluate(x, y, verbose=0)
 
-        print('\nTesting data -> epoc: {}, loss: {}, acc: {}\n'.format(epoch, loss, acc))
+        print('\nTesting data -> epoc: {}, test_loss: {}, test_acc: {}\n'.format(epoch, loss, acc))
 
         data = {
             'epoc': epoch,

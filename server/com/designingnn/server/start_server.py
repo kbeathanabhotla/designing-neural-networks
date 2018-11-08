@@ -59,7 +59,7 @@ def register_client():
 
 
 @app.route('/get-clients', methods=['GET'])
-def register_client():
+def get_clients():
     return app.response_class(
         response=json.dumps(StatusService().get_clients()),
         status=200,
@@ -76,7 +76,7 @@ def get_stats():
     )
 
 
-def set_context_for_current_client():
+def set_context_for_current_server():
 
     if not os.path.exists(AppContext.METADATA_DIR):
         print("meta directory doesn't exist, creating one!")
@@ -111,4 +111,6 @@ if __name__ == '__main__':
 
     set_context_options(parser.parse_args())
 
-    app.run(host="0.0.0.0", port=int(sys.argv[1]))
+    set_context_for_current_server()
+
+    app.run(host="0.0.0.0", port=AppContext.SERVER_PORT)

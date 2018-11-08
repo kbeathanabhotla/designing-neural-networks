@@ -47,9 +47,7 @@ class ModelParseAndTrainTask(threading.Thread):
             'status': 'yet_to_train'
         }
 
-        self.status_update_service.update_client_status('training')
-        self.status_update_service.update_model_train_status(model_train_summary)
-        self.report_train_status_to_server(model_train_summary)
+        self.update_client_status('training', model_train_summary)
 
         try:
             start = time.time()
@@ -62,17 +60,26 @@ class ModelParseAndTrainTask(threading.Thread):
 
             input_dim = (x_train.shape[1], x_train.shape[2], x_train.shape[3])
 
-            print(input_dim)
+            model_parser = ModelParser(self.model_options['model_def'], input_dim)
 
-            if self.is_first_layer_dense():
+            if model_parser.is_first_layer_dense():
+                print("first layer is dense, flattening")
                 num_pixels = x_train.shape[1] * x_train.shape[2] * x_train.shape[3]
 
                 x_train = x_train.reshape(x_train.shape[0], num_pixels)
+                x_val = x_val.reshape(x_val.shape[0], num_pixels)
                 x_test = x_test.reshape(x_test.shape[0], num_pixels)
 
-            model = ModelParser().generate_model(self.model_options['model_def'], input_dim)
+                input_dim = num_pixels
+
+            model = model_parser.generate_model(input_dim)
 
             reporter_callback = KerasEpocCallback(self.model_options['model_id'], (x_test, y_test))
+
+            model_train_summary['status'] = 'training'
+            model_train_summary['summary'] = 'training model'
+
+            self.update_client_status('training', model_train_summary)
 
             history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
                                 epochs=int(self.hyper_parameters['TRAINING_OPTIONS']['epocs']),
@@ -104,7 +111,10 @@ class ModelParseAndTrainTask(threading.Thread):
             model_train_summary["status"] = "failed"
             model_train_summary['stack_trace'] = stack_trace
 
-        self.status_update_service.update_client_status('free')
+        self.update_client_status('free', model_train_summary)
+
+    def update_client_status(self, status, model_train_summary):
+        self.status_update_service.update_client_status(status)
         self.status_update_service.update_model_train_status(model_train_summary)
         self.report_train_status_to_server(model_train_summary)
 
@@ -169,13 +179,6 @@ class ModelParseAndTrainTask(threading.Thread):
         y_test = np_utils.to_categorical(y_test)
 
         return x_train, y_train, x_test, y_test
-
-    def is_first_layer_dense(self):
-        model_def = self.model_options['model_def']
-        model_def = model_def[1:-1]
-        first_layer = model_def.split("),")[0].strip()
-
-        return first_layer[0:first_layer.find("(")] == 'DENSE' or first_layer[0:first_layer.find("(")] == 'SOFTMAX'
 
     def set_client_status(self, status):
         if status == 'training':
