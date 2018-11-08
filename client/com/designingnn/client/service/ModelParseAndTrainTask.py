@@ -12,7 +12,7 @@ from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
 
 from com.designingnn.client.core import AppContext
-from com.designingnn.client.service.KerasEpocCallback import KerasEpocCallback
+from com.designingnn.client.service.KerasEpochCallback import KerasEpochCallback
 from com.designingnn.client.service.ModelParser import ModelParser
 from com.designingnn.client.service.StatusService import StatusService
 
@@ -41,7 +41,7 @@ class ModelParseAndTrainTask(threading.Thread):
             'model_def': self.model_options['model_def'],
             'test_accuracy': 0,
             'train_final_accuracy': 0,
-            'train_best_epoc_accuracy': 0,
+            'train_best_epoch_accuracy': 0,
             'time_taken': 0,
             'summary': 'yet to start training',
             'status': 'yet_to_train'
@@ -74,7 +74,7 @@ class ModelParseAndTrainTask(threading.Thread):
 
             model = model_parser.generate_model(input_dim)
 
-            reporter_callback = KerasEpocCallback(self.model_options['model_id'], (x_test, y_test))
+            reporter_callback = KerasEpochCallback(self.model_options['model_id'], (x_test, y_test))
 
             model_train_summary['status'] = 'training'
             model_train_summary['summary'] = 'training model'
@@ -82,14 +82,14 @@ class ModelParseAndTrainTask(threading.Thread):
             self.update_client_status('training', model_train_summary)
 
             history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
-                                epochs=int(self.hyper_parameters['TRAINING_OPTIONS']['epocs']),
-                                batch_size=int(self.hyper_parameters['TRAINING_OPTIONS']['batch_size']),
+                                epochs=int(self.hyper_parameters['training_options']['epochs']),
+                                batch_size=int(self.hyper_parameters['training_options']['batch_size']),
                                 callbacks=[reporter_callback],
                                 verbose=2)
 
             all_accuracies = history.history['acc']
 
-            model_train_summary['train_best_epoc_accuracy'] = max(all_accuracies)
+            model_train_summary['train_best_epoch_accuracy'] = max(all_accuracies)
             model_train_summary['train_final_accuracy'] = all_accuracies[-1]
 
             scores = model.evaluate(x_test, y_test, verbose=0)

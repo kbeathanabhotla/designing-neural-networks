@@ -17,11 +17,11 @@ def test_endpoint():
     return "This is a test endpoint!!"
 
 
-@app.route('/model-train-epoc-update', methods=['POST'])
-def update_model_training_epoc_status():
+@app.route('/model-train-epoch-update', methods=['POST'])
+def update_model_training_epoch_status():
     data = json.loads(request.data)
     print(data)
-    StatusService().update_epoc_status(data)
+    StatusService().log_epoch_update(data)
 
     return app.response_class(
         response=json.dumps(data),
@@ -82,8 +82,9 @@ def set_context_for_current_server():
         print("meta directory doesn't exist, creating one!")
         os.mkdir(AppContext.METADATA_DIR)
 
+    AppContext.EPOCH_STATUS_FILE = os.path.join(AppContext.METADATA_DIR, 'epoch_status.txt')
+    AppContext.MODELS_FOLDER = os.path.join(AppContext.METADATA_DIR, 'models')
     AppContext.CLIENTS_FILE = os.path.join(AppContext.METADATA_DIR, 'clients.txt')
-    AppContext.EPOC_STATUS_FILE = os.path.join(AppContext.METADATA_DIR, 'epoc_status.txt')
     AppContext.SERVER_STATUS_FILE = os.path.join(AppContext.METADATA_DIR, 'server_status.txt')
 
     # AppContext.MODELS_INFO_FOLDER = os.path.join(AppContext.METADATA_DIR, 'trained_models_info')
