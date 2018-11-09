@@ -37,7 +37,8 @@ class ModelRunner:
         num_classes = self.y_test.shape[1]
 
         # Splitting the training data into training and validation
-        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(X_train, y_train, test_size=0.2,
+                                                                              random_state=42)
 
         print("read data")
 
@@ -45,45 +46,54 @@ class ModelRunner:
         for learning_rate in self.hyper_parameters.INITIAL_LEARNING_RATES:
             # Reading data
 
-            model = ModelGenerator(self.hyper_parameters, self.state_space_parameters).generate_model(model_descr,
-                                                                                                      self.input_shape,
-                                                                                                      learning_rate)
+            try:
 
-            tensorboard_log_file = AppContext.DATASET + '_iter_' + str(int(iteration)) + '_' +str(time.time())
-            tensorboard_folder = os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'tensorboard'),
-                                              '{}'.format(tensorboard_log_file))
-            tensorboard = TensorBoard(log_dir=tensorboard_folder)
+                model = ModelGenerator(self.hyper_parameters, self.state_space_parameters).generate_model(model_descr,
+                                                                                                          self.input_shape,
+                                                                                                          learning_rate)
 
-            history = model.fit(
-                self.X_train, self.y_train, validation_data=(self.X_val, self.y_val),
-                epochs=self.hyper_parameters.MAX_EPOCHS,
-                batch_size=self.hyper_parameters.TRAIN_BATCH_SIZE,
-                verbose=2,
-                callbacks=[tensorboard]
-            )
+                tensorboard_log_file = AppContext.DATASET + '_iter_' + str(int(iteration)) + '_' + str(time.time())
+                tensorboard_folder = os.path.join(os.path.join(AppContext.APP_BASE_PATH, 'tensorboard'),
+                                                  '{}'.format(tensorboard_log_file))
+                tensorboard = TensorBoard(log_dir=tensorboard_folder)
 
-            # Final evaluation of the model
-            scores = model.evaluate(self.X_test, self.y_test, verbose=0)
+                history = model.fit(
+                    self.X_train, self.y_train, validation_data=(self.X_val, self.y_val),
+                    epochs=self.hyper_parameters.MAX_EPOCHS,
+                    batch_size=self.hyper_parameters.TRAIN_BATCH_SIZE,
+                    verbose=2,
+                    callbacks=[tensorboard]
+                )
 
-            print("""
-            test data scores {}
-            """.format(str(scores)))
+                # Final evaluation of the model
+                scores = model.evaluate(self.X_test, self.y_test, verbose=0)
 
-            test_acc_dict = {}
+                print("""
+                test data scores {}
+                """.format(str(scores)))
 
-            epoc = 1
-            for accuracy in history.history['acc']:
-                test_acc_dict[epoc] = accuracy
-                epoc = epoc + 1
+                test_acc_dict = {}
 
-            # test_acc_dict[epoc] = scores[1]
+                epoc = 1
+                for accuracy in history.history['acc']:
+                    test_acc_dict[epoc] = accuracy
+                    epoc = epoc + 1
 
-            return {
-                'learning_rate': learning_rate,
-                'status': 'SUCCESS',
-                'test_accs': test_acc_dict,
-                'test_data_accuracy': scores[1]
-            }
+                # test_acc_dict[epoc] = scores[1]
+
+                return {
+                    'learning_rate': learning_rate,
+                    'status': 'SUCCESS',
+                    'test_accs': test_acc_dict,
+                    'test_data_accuracy': scores[1]
+                }
+            except:
+                return {
+                    'learning_rate': learning_rate,
+                    'status': 'FAILED',
+                    'test_accs': {0: 0},
+                    'test_data_accuracy': 0
+                }
 
     def data_loader(self, path_train, path_test):
         train_list = os.listdir(path_train)

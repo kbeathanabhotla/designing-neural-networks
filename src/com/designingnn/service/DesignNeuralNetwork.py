@@ -53,22 +53,20 @@ class DesignNeuralNetwork:
         self.check_reached_limit()
 
     def start_app(self):
-        attained_accuracy = 0
-
         trainer = ModelRunner(None, self.hyper_parameters, self.state_space_parameters)
 
-        while self.should_start_iteration(attained_accuracy):
+        while self.check_reached_limit():
 
             net_to_run, iteration = self.generate_new_netork()
 
-            print 'Ready to train ' + net_to_run
+            print('Ready to train ' + net_to_run)
 
             checkpoint_dir = os.path.join(self.list_path, 'checkpoints')
 
             model_dir = self.get_model_dir(checkpoint_dir, net_to_run)
 
             train_out = trainer.run_one_model(net_to_run, iteration)
-            print 'OUT', train_out
+            print('OUT', train_out)
 
             (iter_best, acc_best) = max(train_out['test_accs'].items(), key=lambda x: x[1])
             (iter_last, acc_last) = max(train_out['test_accs'].items(), key=lambda x: x[0])
@@ -91,16 +89,16 @@ class DesignNeuralNetwork:
                                          'localhost')
         print('EXPERIMENT COMPLETE!')
 
-    def should_start_iteration(self, attained_accuracy):
-        v1 = self.check_reached_limit()
-        v2 = self.attained_desired_accuracy(attained_accuracy)
-        print("""
-        {} {}
-        """.format(v1, v2))
-        return not(v1 or v2)
-
-    def attained_desired_accuracy(self, attained_accuracy):
-        return self.hyper_parameters.SATISFIED_ACCURACY <= attained_accuracy
+    # def should_start_iteration(self, attained_accuracy):
+    #     v1 = self.check_reached_limit()
+    #     v2 = self.attained_desired_accuracy(attained_accuracy)
+    #     print("""
+    #     {} {}
+    #     """.format(v1, v2))
+    #     return not(v1 or v2)
+    #
+    # def attained_desired_accuracy(self, attained_accuracy):
+    #     return self.hyper_parameters.SATISFIED_ACCURACY <= attained_accuracy
 
     def clear_logs(self, ckpt_dir, replay):
         ''' Deletes uneeded log files and model saves:
@@ -166,7 +164,7 @@ class DesignNeuralNetwork:
 
     def load_replay(self, replay_dictionary_path):
         if os.path.isfile(replay_dictionary_path):
-            print 'Found replay dictionary'
+            print('Found replay dictionary')
             replay_dic = pd.read_csv(replay_dictionary_path)
             q_training_step = max(replay_dic.ix_q_value_update)
         else:
@@ -177,7 +175,7 @@ class DesignNeuralNetwork:
     def load_qlearner(self):
         # Load previous q_values
         if os.path.isfile(os.path.join(self.list_path, 'q_values.csv')):
-            print 'Found q values'
+            print('Found q values')
             qstore = QValues()
             qstore.load_q_values(os.path.join(self.list_path, 'q_values.csv'))
         else:
@@ -257,7 +255,7 @@ class DesignNeuralNetwork:
                 return net, self.q_training_step
 
         except Exception:
-            print traceback.print_exc()
+            print(traceback.print_exc())
 
     def incorporate_trained_net(self,
                                 net_string,
@@ -297,7 +295,7 @@ class DesignNeuralNetwork:
             self.qlearner.save_q(self.list_path)
 
         except Exception:
-            print traceback.print_exc()
+            print(traceback.print_exc())
 
 
 if __name__ == '__main__':

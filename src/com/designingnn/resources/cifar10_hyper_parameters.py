@@ -10,7 +10,7 @@ IMAGE_HEIGHT = 32                                                               
 IMAGE_WIDTH = 32                                                                    # Final Image Width  NOTE: code only supports square images right now o_O
 
 #Batch Queue parameters
-TRAIN_BATCH_SIZE = 40                                                              # Batch size for training
+TRAIN_BATCH_SIZE = 200                                                              # Batch size for training
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 45000                                            # Number of training examples
 NUM_ITER_PER_EPOCH_TRAIN = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / TRAIN_BATCH_SIZE      
 EVAL_BATCH_SIZE = 100                                                               # Batch size for validation

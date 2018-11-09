@@ -88,8 +88,8 @@ num_classes = y_test.shape[1]
 # Splitting the trining data into training and validation
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-print "num classes " + str(num_classes)
-print "ip shape " + str(input_shape)
+print("num classes " + str(num_classes))
+print("ip shape " + str(input_shape))
 
 # define baseline model
 # The model is a simple neural network with one hidden layer with the same number of neurons as there are inputs (784)
@@ -148,12 +148,12 @@ x = model.fit(
     # validation_steps=5000
 )
 
-print x.history
-print type(x)
+print(x.history)
+print(type(x))
 # Final evaluation of the model
 scores = model.evaluate(X_test, y_test, verbose=0)
 print("""
         test data scores {}
         """.format(str(scores)))
-print scores
+print(scores)
 print("Baseline Error: %.2f%%" % (100 - scores[1] * 100))

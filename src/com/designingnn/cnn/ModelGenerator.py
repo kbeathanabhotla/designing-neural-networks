@@ -3,6 +3,8 @@ from keras.layers import Dense, Conv2D, Dropout, Flatten, MaxPooling2D
 from keras.layers.pooling import AveragePooling2D
 from keras.models import Sequential
 from keras.optimizers import Adam, SGD
+from keras.utils import multi_gpu_model
+
 
 from com.designingnn.resources import mnist_state_space_parameters, mnist_hyper_parameters
 from com.designingnn.rl.Cnn import parse
@@ -35,7 +37,7 @@ class ModelGenerator:
                 layer.terminate))
 
             if layer.terminate == 1:
-                print self.hyper_parameters.NUM_CLASSES
+                print(self.hyper_parameters.NUM_CLASSES)
 
                 if not is_flattened:
                     model.add(Flatten())
@@ -114,9 +116,9 @@ class ModelGenerator:
             optimizer = SGD(lr=learning_rate, momentum=self.hyper_parameters.MOMENTUM,
                             decay=self.hyper_parameters.WEIGHT_DECAY_RATE)
 
-        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-
-        return model
+        parallel_model = multi_gpu_model(model, gpus=4)
+        parallel_model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+        return parallel_model
 
 
 if __name__ == '__main__':
