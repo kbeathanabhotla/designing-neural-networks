@@ -91,12 +91,12 @@ class StatusService:
                 q_learner_service = QLearnerService()
 
                 model_def = q_learner_service.generate_new_model()
-
-                while model_def in AppContext.MODELS_GENERATED:
-                    model_def = q_learner_service.generate_new_model()
-
-                AppContext.MODELS_GENERATED.append(model_def)
                 model_id = AppContext.CURRENT_MAX_ITERATION
+
+                if model_def in AppContext.MODELS_GENERATED:
+                    pass
+
+                AppContext.MODELS_GENERATED[model_def] = model_id
                 AppContext.MODELS_IN_TRAINING[model_id] = {
                     'client_id': client['id'],
                     'model_id': model_id,
