@@ -1,5 +1,7 @@
 import pandas as pd
-import StateEnumerator as se
+
+from com.designingnn.rl.State import State
+
 
 class QValues:
     def __init__(self):
@@ -25,7 +27,7 @@ class QValues:
                                                                 'end_fc_size',
                                                                 'end_terminate',
                                                                 'utility']]):
-            start_state = se.State(layer_type=row[0],
+            start_state = State(layer_type=row[0],
                                    layer_depth=row[1],
                                    filter_depth=row[2],
                                    filter_size=row[3],
@@ -33,7 +35,7 @@ class QValues:
                                    image_size=row[5],
                                    fc_size=row[6],
                                    terminate=row[7]).as_tuple()
-            end_state = se.State(layer_type=row[8],
+            end_state = State(layer_type=row[8],
                                  layer_depth=row[9],
                                  filter_depth=row[10],
                                  filter_size=row[11],
@@ -68,9 +70,9 @@ class QValues:
         end_terminate = []
         utility = []
         for start_state_list in self.q.keys():
-            start_state = se.State(state_list=start_state_list)
+            start_state = State(state_list=start_state_list)
             for to_state_ix in range(len(self.q[start_state_list]['actions'])):
-                to_state = se.State(state_list=self.q[start_state_list]['actions'][to_state_ix])
+                to_state = State(state_list=self.q[start_state_list]['actions'][to_state_ix])
                 utility.append(self.q[start_state_list]['utilities'][to_state_ix])
                 start_layer_type.append(start_state.layer_type)
                 start_layer_depth.append(start_state.layer_depth)

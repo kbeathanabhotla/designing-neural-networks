@@ -4,8 +4,8 @@ image_size = 28
 layer_limit = 4
 
 # Transition Options
-possible_conv_depths = [64, 128, 256, 512]
-possible_conv_sizes = [1, 3, 5]
+possible_conv_depths = [32, 64, 128]
+possible_conv_sizes = [1, 3]
 possible_pool_sizes = [[5, 3], [3, 2], [2, 2]]
 max_fc = 2
 possible_fc_sizes = [i for i in [512, 256, 128] if i >= output_states]

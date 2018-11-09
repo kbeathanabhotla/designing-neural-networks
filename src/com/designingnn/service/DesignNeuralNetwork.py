@@ -55,7 +55,9 @@ class DesignNeuralNetwork:
     def start_app(self):
         trainer = ModelRunner(None, self.hyper_parameters, self.state_space_parameters)
 
-        while self.check_reached_limit():
+        limit_attained = self.check_reached_limit()
+
+        while limit_attained is None or not limit_attained:
 
             net_to_run, iteration = self.generate_new_netork()
 
@@ -223,9 +225,8 @@ class DesignNeuralNetwork:
 
                 return completed_experiment
             else:
+                print('from here 2')
                 return False
-        else:
-            return False
 
     def generate_new_netork(self):
         try:

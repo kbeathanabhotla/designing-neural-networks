@@ -3,11 +3,12 @@ import os
 import numpy as np
 import pandas as pd
 
-import StateEnumerator as se
-from StateStringUtils import StateStringUtils
 from com.designingnn.rl import Cnn
 from com.designingnn.rl.Cnn import parse
 from com.designingnn.rl.QValues import QValues
+from com.designingnn.rl.State import State
+from com.designingnn.rl.StateEnumerator import StateEnumerator
+from com.designingnn.rl.StateStringUtils import StateStringUtils
 
 
 class QLearner:
@@ -41,11 +42,11 @@ class QLearner:
         self.state_space_parameters = state_space_parameters
 
         # Class that will expand states for us
-        self.enum = se.StateEnumerator(state_space_parameters)
+        self.enum = StateEnumerator(state_space_parameters)
         self.stringutils = StateStringUtils(state_space_parameters)
 
         # Starting State
-        self.state = se.State('start', 0, 1, 0, 0, state_space_parameters.image_size, 0, 0) if not state else state
+        self.state = State('start', 0, 1, 0, 0, state_space_parameters.image_size, 0, 0) if not state else state
         self.bucketed_state = self.enum.bucket_state(self.state)
 
         # Cached Q-Values -- used for q learning update and transition
@@ -106,7 +107,7 @@ class QLearner:
         self.state_list = []
 
         # Starting State
-        self.state = se.State('start', 0, 1, 0, 0, self.state_space_parameters.image_size, 0, 0)
+        self.state = State('start', 0, 1, 0, 0, self.state_space_parameters.image_size, 0, 0)
         self.bucketed_state = self.enum.bucket_state(self.state)
 
     def _run_agent(self):
@@ -125,13 +126,13 @@ class QLearner:
         action_values = self.qstore.q[self.bucketed_state.as_tuple()]
         # epsilon greedy choice
         if np.random.random() < self.epsilon:
-            action = se.State(state_list=action_values['actions'][np.random.randint(len(action_values['actions']))])
+            action = State(state_list=action_values['actions'][np.random.randint(len(action_values['actions']))])
         else:
             max_q_value = max(action_values['utilities'])
             max_q_indexes = [i for i in range(len(action_values['actions'])) if
                              action_values['utilities'][i] == max_q_value]
             max_actions = [action_values['actions'][i] for i in max_q_indexes]
-            action = se.State(state_list=max_actions[np.random.randint(len(max_actions))])
+            action = State(state_list=max_actions[np.random.randint(len(max_actions))])
 
         self.state = self.enum.state_action_transition(self.state, action)
         self.bucketed_state = self.enum.bucket_state(self.state)
