@@ -116,9 +116,9 @@ class ModelGenerator:
             optimizer = SGD(lr=learning_rate, momentum=self.hyper_parameters.MOMENTUM,
                             decay=self.hyper_parameters.WEIGHT_DECAY_RATE)
 
-        parallel_model = multi_gpu_model(model, gpus=4)
-        parallel_model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-        return parallel_model
+        # parallel_model = multi_gpu_model(model, gpus=4)
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+        return model
 
 
 if __name__ == '__main__':

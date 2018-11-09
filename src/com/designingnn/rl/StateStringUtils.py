@@ -1,4 +1,5 @@
-import StateEnumerator as se
+from com.designingnn.rl.State import State
+from com.designingnn.rl.StateEnumerator import StateEnumerator
 
 
 class StateStringUtils:
@@ -9,7 +10,7 @@ class StateStringUtils:
     def __init__(self, state_space_parameters):
         self.image_size = state_space_parameters.image_size
         self.output_number = state_space_parameters.output_states
-        self.enum = se.StateEnumerator(state_space_parameters)
+        self.enum = StateEnumerator(state_space_parameters)
 
     def add_drop_out_states(self, state_list):
         ''' Add drop out every 2 layers and after each fully connected layer
@@ -69,61 +70,61 @@ class StateStringUtils:
             return 'FC(%i)' % (state.fc_size)
         elif state.layer_type == 'dropout':
             return 'D(%i,%i)' % (
-            state.filter_depth, state.fc_size)  ##SUPER BAD i am using fc_size and filter depth -- should fix later
+                state.filter_depth, state.fc_size)  ##SUPER BAD i am using fc_size and filter depth -- should fix later
         return None
 
     def convert_model_string_to_states(self, parsed_list, start_state=None):
         '''Takes a parsed model string and returns a recursive list of states.'''
 
-        states = [start_state] if start_state else [se.State('start', 0, 1, 0, 0, self.image_size, 0, 0)]
+        states = [start_state] if start_state else [State('start', 0, 1, 0, 0, self.image_size, 0, 0)]
 
         for layer in parsed_list:
             if layer[0] == 'conv':
-                states.append(se.State(layer_type='conv',
-                                       layer_depth=states[-1].layer_depth + 1,
-                                       filter_depth=layer[1],
-                                       filter_size=layer[2],
-                                       stride=layer[3],
-                                       image_size=states[-1].image_size,
-                                       fc_size=0,
-                                       terminate=0))
+                states.append(State(layer_type='conv',
+                                    layer_depth=states[-1].layer_depth + 1,
+                                    filter_depth=layer[1],
+                                    filter_size=layer[2],
+                                    stride=layer[3],
+                                    image_size=states[-1].image_size,
+                                    fc_size=0,
+                                    terminate=0))
             elif layer[0] == 'gap':
-                states.append(se.State(layer_type='gap',
-                                       layer_depth=states[-1].layer_depth + 1,
-                                       filter_depth=0,
-                                       filter_size=0,
-                                       stride=0,
-                                       image_size=1,
-                                       fc_size=0,
-                                       terminate=0))
+                states.append(State(layer_type='gap',
+                                    layer_depth=states[-1].layer_depth + 1,
+                                    filter_depth=0,
+                                    filter_size=0,
+                                    stride=0,
+                                    image_size=1,
+                                    fc_size=0,
+                                    terminate=0))
             elif layer[0] == 'pool':
-                states.append(se.State(layer_type='pool',
-                                       layer_depth=states[-1].layer_depth + 1,
-                                       filter_depth=0,
-                                       filter_size=layer[1],
-                                       stride=layer[2],
-                                       image_size=self.enum._calc_new_image_size(states[-1].image_size, layer[1],
-                                                                                 layer[2]),
-                                       fc_size=0,
-                                       terminate=0))
+                states.append(State(layer_type='pool',
+                                    layer_depth=states[-1].layer_depth + 1,
+                                    filter_depth=0,
+                                    filter_size=layer[1],
+                                    stride=layer[2],
+                                    image_size=self.enum._calc_new_image_size(states[-1].image_size, layer[1],
+                                                                              layer[2]),
+                                    fc_size=0,
+                                    terminate=0))
             elif layer[0] == 'fc':
-                states.append(se.State(layer_type='fc',
-                                       layer_depth=states[-1].layer_depth + 1,
-                                       filter_depth=len([state for state in states if state.layer_type == 'fc']),
-                                       filter_size=0,
-                                       stride=0,
-                                       image_size=0,
-                                       fc_size=layer[1],
-                                       terminate=0))
+                states.append(State(layer_type='fc',
+                                    layer_depth=states[-1].layer_depth + 1,
+                                    filter_depth=len([state for state in states if state.layer_type == 'fc']),
+                                    filter_size=0,
+                                    stride=0,
+                                    image_size=0,
+                                    fc_size=layer[1],
+                                    terminate=0))
             elif layer[0] == 'dropout':
-                states.append(se.State(layer_type='dropout',
-                                       layer_depth=states[-1].layer_depth,
-                                       filter_depth=layer[1],
-                                       filter_size=0,
-                                       stride=0,
-                                       image_size=states[-1].image_size,
-                                       fc_size=layer[2],
-                                       terminate=0))
+                states.append(State(layer_type='dropout',
+                                    layer_depth=states[-1].layer_depth,
+                                    filter_depth=layer[1],
+                                    filter_size=0,
+                                    stride=0,
+                                    image_size=states[-1].image_size,
+                                    fc_size=layer[2],
+                                    terminate=0))
             elif layer[0] == 'softmax':
                 termination_state = states[-1].copy() if states[-1].layer_type != 'dropout' else states[-2].copy()
                 termination_state.terminate = 1
